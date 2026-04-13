@@ -288,14 +288,21 @@ window.carregarRegistrosAdmin = async function(){
   if(!tbody) return
   const { data } = await supabase.from('registros').select('*').order('data', { ascending: false }).limit(120)
   const regs = data || []
-  tbody.innerHTML = regs.length ? regs.map(r => `<tr><td><input id="r_usuario_${r.id}" value="${r.usuario ?? ''}"></td><td><input id="r_data_${r.id}" value="${r.data ?? ''}"></td><td>
-<select id="r_tipo_${r.id}">
-  <option value="Entrada" ${r.tipo === 'Entrada' ? 'selected' : ''}>Entrada</option>
-  <option value="Saída Almoço" ${r.tipo === 'Saída Almoço' ? 'selected' : ''}>Saída Almoço</option>
-  <option value="Volta Almoço" ${r.tipo === 'Volta Almoço' ? 'selected' : ''}>Volta Almoço</option>
-  <option value="Saída" ${r.tipo === 'Saída' ? 'selected' : ''}>Saída</option>
-</select>
-</td><td><input id="r_obs_${r.id}" value="${r.observacao ?? ''}"></td><td><div class="toolbar"><button onclick="salvarRegistro('${r.id}')" style="width:auto">Salvar</button><button class="danger" onclick="excluirRegistro('${r.id}')" style="width:auto">Excluir</button></div></td></tr>`).join('') : '<tr><td colspan="5">Nenhum registro.</td></tr>'
+  tbody.innerHTML = regs.length ? regs.map(r => `
+    <tr>
+      <td><input id="r_usuario_${r.id}" value="${r.usuario ?? ''}"></td>
+      <td><input id="r_data_${r.id}" value="${r.data ?? ''}"></td>
+      <td>
+        <select id="r_tipo_${r.id}">
+          <option value="Entrada" ${r.tipo === 'Entrada' ? 'selected' : ''}>Entrada</option>
+          <option value="Saída Almoço" ${r.tipo === 'Saída Almoço' ? 'selected' : ''}>Saída Almoço</option>
+          <option value="Volta Almoço" ${r.tipo === 'Volta Almoço' ? 'selected' : ''}>Volta Almoço</option>
+          <option value="Saída" ${r.tipo === 'Saída' ? 'selected' : ''}>Saída</option>
+        </select>
+      </td>
+      <td><input id="r_obs_${r.id}" value="${r.observacao ?? ''}"></td>
+      <td><div class="toolbar"><button onclick="salvarRegistro('${r.id}')" style="width:auto">Salvar</button><button class="danger" onclick="excluirRegistro('${r.id}')" style="width:auto">Excluir</button></div></td>
+    </tr>`).join('') : '<tr><td colspan="5">Nenhum registro.</td></tr>'
 }
 window.salvarRegistro = async function(id){
   requireAdmin()
@@ -408,13 +415,8 @@ async function boot(){
     document.getElementById('idAtual').textContent = user.funcionario_id || '-'
 
     const adminBtn = document.querySelector('button[onclick="irAdmin()"]')
-    if(user.role !== 'admin' && adminBtn){
-      adminBtn.style.display = 'none'
-    }
-
-    if(user.role === 'admin'){
-      document.getElementById('btnExportarDia').classList.remove('hidden')
-    }
+    if(user.role !== 'admin' && adminBtn) adminBtn.style.display = 'none'
+    if(user.role === 'admin') document.getElementById('btnExportarDia').classList.remove('hidden')
 
     startBrasiliaClock()
     await carregarRegistrosDoDia()
