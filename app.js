@@ -104,7 +104,7 @@ window.login = async function(){
   const { data, error } = await supabase.from('usuarios').select('*').eq('usuario', usuario).eq('senha', senha).maybeSingle()
   if(error || !data){ showMsg('msg','Usuário ou senha inválidos.', false, 'danger'); return }
   setUser(data)
-  location.href = data.role === 'admin' ? 'admin.html' : 'painel.html'
+  location.href = 'painel.html'
 }
 
 window.registrarPonto = async function(tipo){
