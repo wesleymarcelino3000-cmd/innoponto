@@ -2,13 +2,22 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Ponto InnoLife</title>
 <link rel="icon" href="favicon.ico">
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b1c38">
+<title>Ponto</title>
 </head>
 <body>
-<h2>Ponto InnoLife</h2>
-<p>Sistema pronto com ícone mobile perfeito</p>
+<h2>Login</h2>
+<input id="user" placeholder="Usuário">
+<input id="pass" type="password" placeholder="Senha">
+<button onclick="login()">Entrar</button>
+
+<script>
+function login(){
+ localStorage.setItem("user", document.getElementById("user").value)
+ location.href="painel.html"
+}
+</script>
 </body>
 </html>

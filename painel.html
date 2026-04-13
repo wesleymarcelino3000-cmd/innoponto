@@ -2,13 +2,34 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Ponto InnoLife</title>
 <link rel="icon" href="favicon.ico">
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0b1c38">
+<title>Painel</title>
 </head>
 <body>
-<h2>Ponto InnoLife</h2>
-<p>Sistema pronto com ícone mobile perfeito</p>
+<h2>Painel</h2>
+<p id="u"></p>
+
+<button onclick="bater('Entrada')">Entrada</button>
+<button onclick="bater('Saída')">Saída</button>
+
+<ul id="lista"></ul>
+
+<script>
+document.getElementById("u").innerText="Usuário: "+localStorage.getItem("user")
+
+function bater(tipo){
+ let lista=JSON.parse(localStorage.getItem("pontos")||"[]")
+ lista.push({tipo:tipo,data:new Date().toLocaleString()})
+ localStorage.setItem("pontos",JSON.stringify(lista))
+ render()
+}
+
+function render(){
+ let lista=JSON.parse(localStorage.getItem("pontos")||"[]")
+ document.getElementById("lista").innerHTML=lista.map(p=>"<li>"+p.tipo+" - "+p.data+"</li>").join("")
+}
+
+render()
+</script>
 </body>
 </html>
