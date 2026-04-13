@@ -1,35 +1,68 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" href="favicon.ico">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Painel</title>
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h2>Painel</h2>
-<p id="u"></p>
+<div class="container">
+  <div class="topbar">
+    <div>
+      <img src="logo.webp" class="logo" alt="Logo" style="max-width:120px;margin:0 0 10px 0">
+      <h2>Painel</h2>
+      <span class="badge">Usuário: <strong id="usuarioAtual"></strong></span>
+      <span class="badge">Perfil: <strong id="perfilAtual"></strong></span>
+      <span class="badge">ID: <strong id="idAtual"></strong></span>
+    </div>
+    <div class="toolbar">
+      <div class="clock" id="clockBrasilia">Brasília --:--:--</div>
+      <button class="secondary" onclick="irAdmin()">Admin</button>
+      <button class="danger" onclick="logout()">Sair</button>
+    </div>
+  </div>
 
-<button onclick="bater('Entrada')">Entrada</button>
-<button onclick="bater('Saída')">Saída</button>
+  <div class="glass card">
+    <h3>Registrar ponto</h3>
+    <div class="actions">
+      <button onclick="registrarPonto('Entrada')">Entrada</button>
+      <button onclick="registrarPonto('Saída Almoço')">Saída almoço</button>
+      <button onclick="registrarPonto('Volta Almoço')">Volta almoço</button>
+      <button onclick="registrarPonto('Saída')">Saída</button>
+    </div>
+    <div style="margin-top:12px"><label>Observação</label><input id="obs" placeholder="Observação opcional"></div>
+    <div class="toolbar" style="margin-top:12px">
+      <span id="areaPill" class="status-pill wait">Verificando localização...</span>
+      <span id="distanciaInfo" class="small"></span>
+    </div>
+    <div id="status" class="notice hidden" style="margin-top:12px"></div>
+  </div>
 
-<ul id="lista"></ul>
+  <div class="grid grid-3" style="margin-top:16px">
+    <div class="kpi"><strong>Horas trabalhadas</strong><br><span id="horasHoje">-</span></div>
+    <div class="kpi"><strong>Horas extras</strong><br><span id="extrasHoje">-</span></div>
+    <div class="kpi"><strong>Horas faltantes</strong><br><span id="faltantesHoje">-</span></div>
+  </div>
 
-<script>
-document.getElementById("u").innerText="Usuário: "+localStorage.getItem("user")
-
-function bater(tipo){
- let lista=JSON.parse(localStorage.getItem("pontos")||"[]")
- lista.push({tipo:tipo,data:new Date().toLocaleString()})
- localStorage.setItem("pontos",JSON.stringify(lista))
- render()
-}
-
-function render(){
- let lista=JSON.parse(localStorage.getItem("pontos")||"[]")
- document.getElementById("lista").innerHTML=lista.map(p=>"<li>"+p.tipo+" - "+p.data+"</li>").join("")
-}
-
-render()
-</script>
+  <div class="glass card" style="margin-top:16px">
+    <div class="topbar">
+      <h3>Pontos do dia</h3>
+      <div class="toolbar">
+        <button id="btnExportarDia" class="success hidden" onclick="exportarExcelDia()">Exportar Excel do dia</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data</th><th>Tipo</th><th>Observação</th><th>Latitude</th><th>Longitude</th></tr></thead>
+        <tbody id="tabelaRegistros"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
