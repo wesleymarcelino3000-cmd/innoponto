@@ -1,487 +1,404 @@
 
-import { SUPABASE_URL, SUPABASE_KEY } from './config.js'
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+const state = {
+  token: localStorage.getItem('token') || '',
+  user: JSON.parse(localStorage.getItem('user') || 'null'),
+  settings: null
+};
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
-
-function showMsg(id, text, hidden=false){
-  const el = document.getElementById(id)
-  if(!el) return
-  el.textContent = text
-  el.classList.toggle('hidden', hidden)
+function setAuth(token, user) {
+  state.token = token;
+  state.user = user;
+  localStorage.setItem('token', token);
+  localStorage.setItem('user', JSON.stringify(user));
 }
 
-function getUser(){
-  try { return JSON.parse(localStorage.getItem('ponto_user') || 'null') } catch { return null }
+function clearAuth() {
+  state.token = '';
+  state.user = null;
+  localStorage.removeItem('token');
+  localStorage.removeItem('user');
 }
 
-function requireLogin(){
-  const u = getUser()
-  if(!u) location.href = 'index.html'
-  return u
+function authHeaders() {
+  return state.token ? { Authorization: `Bearer ${state.token}` } : {};
 }
 
-function requireAdmin(){
-  const u = requireLogin()
-  if(u?.role !== 'admin') location.href = 'painel.html'
-  return u
+async function api(url, options = {}) {
+  const resp = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...authHeaders(), ...(options.headers || {}) },
+    ...options
+  });
+  const contentType = resp.headers.get('content-type') || '';
+  if (!resp.ok) {
+    const payload = contentType.includes('application/json') ? await resp.json() : { error: 'Erro' };
+    throw new Error(payload.error || 'Erro');
+  }
+  return contentType.includes('application/json') ? resp.json() : resp;
 }
 
-function formatDateTime(iso){ return new Date(iso).toLocaleString('pt-BR') }
-function formatDateBR(iso){ return new Date(iso).toLocaleDateString('pt-BR') }
-function formatTimeBR(iso){ return new Date(iso).toLocaleTimeString('pt-BR') }
-
-function horasToHM(hours){
-  if(hours == null || isNaN(hours)) return '-'
-  const totalMin = Math.round(hours * 60)
-  const h = Math.floor(totalMin / 60)
-  const m = totalMin % 60
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
+function msg(elId, text, cls='') {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  el.className = 'notice ' + cls;
+  el.textContent = text;
 }
 
-function animacaoPremiumPonto(tipo = "Ponto", texto = "Registrado com sucesso"){
-  const existente = document.querySelector('.ponto-overlay')
-  if(existente) existente.remove()
-  const overlay = document.createElement('div')
-  overlay.className = 'ponto-overlay'
+function fmtDateTime(iso) {
+  return new Date(iso).toLocaleString('pt-BR');
+}
+
+function toHM(hours) {
+  const totalMin = Math.max(0, Math.round(hours * 60));
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+}
+
+function calcDistanceMeters(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const toRad = (v) => (v * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function premiumSuccess(title, text) {
+  const old = document.querySelector('.ponto-overlay');
+  if (old) old.remove();
+  const overlay = document.createElement('div');
+  overlay.className = 'ponto-overlay';
   overlay.innerHTML = `
     <div class="ponto-modal">
-      <div class="ponto-check-wrap">
-        <div class="ponto-check">✔</div>
-      </div>
-      <div class="ponto-titulo">${tipo}</div>
-      <div class="ponto-texto">${texto}</div>
+      <div class="ponto-check-wrap"><div class="ponto-check">✔</div></div>
+      <h3>${title}</h3>
+      <p>${text}</p>
     </div>
-  `
-  document.body.appendChild(overlay)
-  if (navigator.vibrate) navigator.vibrate([120, 60, 120])
-  setTimeout(() => {
-    overlay.classList.add('saindo')
-    setTimeout(() => overlay.remove(), 260)
-  }, 2200)
+  `;
+  document.body.appendChild(overlay);
+  if (navigator.vibrate) navigator.vibrate([120, 60, 120]);
+  setTimeout(() => overlay.remove(), 2200);
 }
 
-async function getConfiguracoes(){
-  const { data } = await supabase.from('configuracoes').select('*').limit(1).maybeSingle()
-  return data || { jornada_horas: 8, tolerancia_min: 10 }
-}
-
-async function mesFechado(anoMes){
-  const { data } = await supabase.from('fechamentos').select('*').eq('mes_ref', anoMes).maybeSingle()
-  return !!data
-}
-
-async function carregarHoraAtual(){
-  const el = document.getElementById('agora')
-  if(!el) return
-  const render = ()=> el.textContent = 'Agora: ' + new Date().toLocaleString('pt-BR')
-  render()
-  setInterval(render, 1000)
-}
-
-window.login = async function(){
-  const usuario = document.getElementById('user').value.trim()
-  const senha = document.getElementById('pass').value.trim()
-
-  const { data, error } = await supabase
-    .from('usuarios')
-    .select('*')
-    .eq('usuario', usuario)
-    .eq('senha', senha)
-    .maybeSingle()
-
-  if(error || !data){
-    showMsg('msg', 'Usuário ou senha inválidos.')
-    return
+async function login() {
+  try {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const data = await api('/api/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password })
+    });
+    setAuth(data.token, data.user);
+    location.href = data.user.role === 'admin' ? '/admin.html' : '/painel.html';
+  } catch (e) {
+    msg('loginMsg', e.message, 'danger');
   }
-
-  localStorage.setItem('ponto_user', JSON.stringify(data))
-  location.href = data.role === 'admin' ? 'admin.html' : 'painel.html'
 }
 
-window.logout = function(){
-  localStorage.removeItem('ponto_user')
-  location.href = 'index.html'
+function logout() {
+  clearAuth();
+  location.href = '/';
 }
 
-window.irAdmin = function(){
-  const u = getUser()
-  if(u?.role === 'admin') location.href = 'admin.html'
-  else alert('Somente admin pode acessar.')
+async function loadMe() {
+  const data = await api('/api/me');
+  state.settings = data.settings;
+  return data;
 }
 
-window.voltarPainel = function(){ location.href = 'painel.html' }
-
-window.registrarPonto = async function(tipo){
-  const user = requireLogin()
-  const obs = (document.getElementById('obs')?.value || '').trim()
-  const hojeMes = new Date().toISOString().slice(0,7)
-
-  if(await mesFechado(hojeMes)){
-    showMsg('status', 'Este mês está fechado e não aceita novos registros.')
-    return
+function ensureAuth() {
+  if (!state.token || !state.user) {
+    location.href = '/';
+    throw new Error('Sem sessão');
   }
+}
 
-  navigator.geolocation.getCurrentPosition(async pos=>{
-    const payload = {
-      usuario: user.usuario,
-      tipo,
-      data: new Date().toISOString(),
-      latitude: String(pos.coords.latitude),
-      longitude: String(pos.coords.longitude),
-      observacao: obs
+function ensureAdmin() {
+  ensureAuth();
+  if (state.user.role !== 'admin') {
+    location.href = '/painel.html';
+    throw new Error('Sem acesso');
+  }
+}
+
+async function registerPoint(type) {
+  ensureAuth();
+  const obs = document.getElementById('obs')?.value || '';
+  navigator.geolocation.getCurrentPosition(async (pos) => {
+    try {
+      const payload = {
+        type,
+        latitude: pos.coords.latitude,
+        longitude: pos.coords.longitude,
+        observation: obs
+      };
+      const data = await api('/api/records', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      msg('statusMsg', `Ponto registrado. Distância: ${data.distance_m}m.`, 'success');
+      premiumSuccess(type, 'Ponto registrado com sucesso.');
+      if (document.getElementById('obs')) document.getElementById('obs').value = '';
+      await loadMyRecords();
+      await loadTodaySummary();
+      await checkArea();
+    } catch (e) {
+      msg('statusMsg', e.message, 'danger');
     }
-
-    const { error } = await supabase.from('registros').insert(payload)
-    if(error){
-      showMsg('status', 'Erro ao registrar ponto.')
-      return
-    }
-
-    const obsEl = document.getElementById('obs')
-    if(obsEl) obsEl.value = ''
-    showMsg('status', 'Ponto registrado com sucesso.')
-    animacaoPremiumPonto(tipo, `${tipo} registrada com sucesso.`)
-    await carregarMeusRegistros()
-    await carregarResumoHoje()
-  }, ()=>{
-    showMsg('status', 'Permita a localização para registrar o ponto.')
-  })
+  }, () => {
+    msg('statusMsg', 'Permita a localização para registrar o ponto.', 'warning');
+  });
 }
 
-async function buscarMeusRegistrosHoje(){
-  const user = requireLogin()
-  const hoje = new Date().toISOString().slice(0,10)
-  const { data } = await supabase.from('registros').select('*').eq('usuario', user.usuario).order('data', { ascending: true })
-  return (data || []).filter(r => String(r.data).startsWith(hoje))
-}
+async function loadMyRecords() {
+  ensureAuth();
+  const rows = await api('/api/records/my');
+  const tbody = document.getElementById('myRecords');
+  if (!tbody) return;
 
-function calcularResumoDia(regs, jornadaHoras=8){
-  const entrada = regs.find(r => r.tipo === 'Entrada')
-  const saida = [...regs].reverse().find(r => r.tipo === 'Saída')
-  const saidaAlmoco = regs.find(r => r.tipo === 'Saída Almoço')
-  const voltaAlmoco = regs.find(r => r.tipo === 'Volta Almoço')
-
-  let totalMs = 0
-  if(entrada && saida) totalMs = new Date(saida.data) - new Date(entrada.data)
-  if(saidaAlmoco && voltaAlmoco) totalMs -= (new Date(voltaAlmoco.data) - new Date(saidaAlmoco.data))
-
-  const workedHours = Math.max(0, totalMs / 1000 / 60 / 60)
-  const extras = Math.max(0, workedHours - jornadaHoras)
-  const faltantes = Math.max(0, jornadaHoras - workedHours)
-  return { workedHours, extras, faltantes }
-}
-
-async function carregarResumoHoje(){
-  const horasEl = document.getElementById('horasHoje')
-  if(!horasEl) return
-  const cfg = await getConfiguracoes()
-  const regs = await buscarMeusRegistrosHoje()
-  const resumo = calcularResumoDia(regs, Number(cfg.jornada_horas || 8))
-  document.getElementById('horasHoje').textContent = horasToHM(resumo.workedHours)
-  document.getElementById('extrasHoje').textContent = horasToHM(resumo.extras)
-  document.getElementById('faltantesHoje').textContent = horasToHM(resumo.faltantes)
-}
-
-async function carregarMeusRegistros(){
-  const tbody = document.getElementById('tabelaRegistros')
-  if(!tbody) return
-  const user = requireLogin()
-  const { data } = await supabase.from('registros').select('*').eq('usuario', user.usuario).order('data', { ascending: false }).limit(50)
-  const regs = data || []
-  tbody.innerHTML = regs.length ? regs.map(r => `
+  tbody.innerHTML = rows.length ? rows.map(r => `
     <tr>
-      <td>${formatDateTime(r.data)}</td>
-      <td>${r.tipo}</td>
-      <td>${r.observacao || '-'}</td>
-      <td>${r.latitude || '-'}</td>
-      <td>${r.longitude || '-'}</td>
+      <td>${fmtDateTime(r.timestamp)}</td>
+      <td>${r.type}</td>
+      <td>${r.observation || '-'}</td>
+      <td>${r.latitude ?? '-'}</td>
+      <td>${r.longitude ?? '-'}</td>
+      <td>${Math.round(r.distance_m || 0)}m</td>
     </tr>
-  `).join('') : '<tr><td colspan="5">Nenhum registro.</td></tr>'
+  `).join('') : '<tr><td colspan="6">Nenhum registro.</td></tr>';
 }
 
-window.salvarConfiguracoes = async function(){
-  requireAdmin()
-  const jornada = Number(document.getElementById('jornadaHoras').value || 8)
-  const tolerancia = Number(document.getElementById('toleranciaMin').value || 10)
-  const { data: existing } = await supabase.from('configuracoes').select('*').limit(1).maybeSingle()
-  let result
-  if(existing){
-    result = await supabase.from('configuracoes').update({
-      jornada_horas: jornada, tolerancia_min: tolerancia
-    }).eq('id', existing.id)
-  } else {
-    result = await supabase.from('configuracoes').insert({
-      jornada_horas: jornada, tolerancia_min: tolerancia
-    })
-  }
-  showMsg('cfgMsg', result.error ? 'Erro ao salvar configurações.' : 'Configurações salvas.')
+async function loadTodaySummary() {
+  ensureAuth();
+  const rows = await api('/api/records/my');
+  const today = new Date().toISOString().slice(0, 10);
+  const todayRows = rows.filter(r => String(r.timestamp).startsWith(today)).reverse();
+  const entrada = todayRows.find(r => r.type === 'Entrada');
+  const saida = [...todayRows].reverse().find(r => r.type === 'Saída');
+  const saidaAlmoco = todayRows.find(r => r.type === 'Saída Almoço');
+  const voltaAlmoco = todayRows.find(r => r.type === 'Volta Almoço');
+
+  let worked = 0;
+  if (entrada && saida) worked = (new Date(saida.timestamp) - new Date(entrada.timestamp)) / 3600000;
+  if (saidaAlmoco && voltaAlmoco) worked -= (new Date(voltaAlmoco.timestamp) - new Date(saidaAlmoco.timestamp)) / 3600000;
+  worked = Math.max(0, worked);
+
+  const jornada = Number(state.settings?.jornada_hours || 8);
+  const extras = Math.max(0, worked - jornada);
+  const faltantes = Math.max(0, jornada - worked);
+
+  const workedEl = document.getElementById('workedHours');
+  if (workedEl) workedEl.textContent = toHM(worked);
+  const extraEl = document.getElementById('extraHours');
+  if (extraEl) extraEl.textContent = toHM(extras);
+  const missEl = document.getElementById('missingHours');
+  if (missEl) missEl.textContent = toHM(faltantes);
 }
 
-window.fecharMes = async function(){
-  const user = requireAdmin()
-  const mes = document.getElementById('mesFechamento').value
-  if(!mes){
-    showMsg('fechMsg', 'Selecione um mês.')
-    return
-  }
-  const { error } = await supabase.from('fechamentos').insert({
-    mes_ref: mes,
-    fechado_por: user.usuario,
-    fechado_em: new Date().toISOString()
-  })
-  showMsg('fechMsg', error ? 'Erro ao fechar mês. Talvez ele já esteja fechado.' : 'Mês fechado com sucesso.')
-  await carregarResumoGeral()
+async function checkArea() {
+  ensureAuth();
+  if (!document.getElementById('areaStatus')) return;
+
+  navigator.geolocation.getCurrentPosition((pos) => {
+    const dist = calcDistanceMeters(
+      pos.coords.latitude,
+      pos.coords.longitude,
+      Number(state.settings.company_lat),
+      Number(state.settings.company_lng)
+    );
+    const pill = document.getElementById('areaStatus');
+    const txt = document.getElementById('areaText');
+    if (dist <= Number(state.settings.radius_m)) {
+      pill.className = 'status-pill ok';
+      pill.textContent = 'Dentro da área permitida';
+    } else {
+      pill.className = 'status-pill no';
+      pill.textContent = 'Fora da área permitida';
+    }
+    txt.textContent = `Distância atual: ${Math.round(dist)}m | Limite: ${state.settings.radius_m}m`;
+  }, () => {
+    const pill = document.getElementById('areaStatus');
+    const txt = document.getElementById('areaText');
+    pill.className = 'status-pill wait';
+    pill.textContent = 'Localização indisponível';
+    txt.textContent = 'Permita a localização para verificar a área.';
+  });
 }
 
-window.carregarResumoGeral = async function(){
-  requireAdmin()
-  const [{ data: registros }, { data: usuarios }, { data: fechamentos }] = await Promise.all([
-    supabase.from('registros').select('*'),
-    supabase.from('usuarios').select('*'),
-    supabase.from('fechamentos').select('*')
-  ])
-  const set = (id, value) => { const el = document.getElementById(id); if(el) el.textContent = value }
-  set('kpiRegistros', (registros || []).length)
-  set('kpiUsuarios', (usuarios || []).length)
-  set('kpiFechados', (fechamentos || []).length)
+async function loadDashboard() {
+  ensureAdmin();
+  const data = await api('/api/dashboard');
+  document.getElementById('kpiUsers').textContent = data.users;
+  document.getElementById('kpiRecords').textContent = data.records;
+  document.getElementById('kpiClosings').textContent = data.closings;
 }
 
-window.criarUsuario = async function(){
-  requireAdmin()
-  const usuario = document.getElementById('novoUsuario').value.trim()
-  const senha = document.getElementById('novaSenha').value.trim()
-  const role = document.getElementById('novoPerfil').value
-
-  if(!usuario || !senha){
-    showMsg('userMsg', 'Preencha usuário e senha.')
-    return
-  }
-
-  const { error } = await supabase.from('usuarios').insert({ usuario, senha, role })
-  showMsg('userMsg', error ? 'Erro ao criar usuário. Verifique se ele já existe.' : 'Usuário criado com sucesso.')
-  if(!error){
-    document.getElementById('novoUsuario').value = ''
-    document.getElementById('novaSenha').value = ''
-    document.getElementById('novoPerfil').value = 'funcionario'
-    await carregarUsuarios()
-    await carregarResumoGeral()
-  }
-}
-
-window.carregarUsuarios = async function(){
-  requireAdmin()
-  const tbody = document.getElementById('tabelaUsuarios')
-  if(!tbody) return
-  const { data } = await supabase.from('usuarios').select('*').order('usuario', { ascending: true })
-  const users = data || []
-  tbody.innerHTML = users.length ? users.map(u => `
+async function loadUsers() {
+  ensureAdmin();
+  const users = await api('/api/users');
+  const tbody = document.getElementById('usersTable');
+  if (!tbody) return;
+  tbody.innerHTML = users.map(u => `
     <tr>
-      <td><input id="usuario_${u.id}" value="${u.usuario ?? ''}"></td>
-      <td><input id="senha_${u.id}" value="${u.senha ?? ''}"></td>
+      <td><input id="u_name_${u.id}" value="${u.username}"></td>
+      <td><input id="u_pass_${u.id}" placeholder="Nova senha (opcional)"></td>
       <td>
-        <select id="role_${u.id}">
-          <option value="funcionario" ${u.role === 'funcionario' ? 'selected' : ''}>Funcionário</option>
+        <select id="u_role_${u.id}">
+          <option value="employee" ${u.role === 'employee' ? 'selected' : ''}>Funcionário</option>
           <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
         </select>
       </td>
       <td>
-        <div class="user-actions">
-          <button onclick="salvarUsuario('${u.id}')" style="width:auto">Salvar</button>
-          <button class="danger" onclick="excluirUsuario('${u.id}')" style="width:auto">Excluir</button>
+        <select id="u_active_${u.id}">
+          <option value="1" ${u.active ? 'selected' : ''}>Ativo</option>
+          <option value="0" ${!u.active ? 'selected' : ''}>Inativo</option>
+        </select>
+      </td>
+      <td>
+        <div class="toolbar">
+          <button onclick="saveUser(${u.id})" style="width:auto">Salvar</button>
+          <button class="danger" onclick="deleteUser(${u.id})" style="width:auto">Excluir</button>
         </div>
       </td>
     </tr>
-  `).join('') : '<tr><td colspan="4">Nenhum usuário.</td></tr>'
+  `).join('');
 }
 
-window.salvarUsuario = async function(id){
-  requireAdmin()
-  const usuario = document.getElementById(`usuario_${id}`).value.trim()
-  const senha = document.getElementById(`senha_${id}`).value.trim()
-  const role = document.getElementById(`role_${id}`).value
-
-  if(!usuario || !senha){
-    showMsg('userMsg', 'Usuário e senha são obrigatórios.')
-    return
-  }
-
-  const { error } = await supabase.from('usuarios').update({ usuario, senha, role }).eq('id', id)
-  showMsg('userMsg', error ? 'Erro ao salvar usuário.' : 'Usuário atualizado com sucesso.')
-  if(!error){
-    const atual = getUser()
-    const { data: updated } = await supabase.from('usuarios').select('*').eq('id', id).maybeSingle()
-    if(atual && updated && atual.id === updated.id){
-      localStorage.setItem('ponto_user', JSON.stringify(updated))
-    }
-    await carregarUsuarios()
-    await carregarResumoGeral()
+async function createUser() {
+  ensureAdmin();
+  try {
+    const username = document.getElementById('newUsername').value.trim();
+    const password = document.getElementById('newPassword').value.trim();
+    const role = document.getElementById('newRole').value;
+    await api('/api/users', {
+      method: 'POST',
+      body: JSON.stringify({ username, password, role })
+    });
+    msg('userMsg', 'Usuário criado com sucesso.', 'success');
+    document.getElementById('newUsername').value = '';
+    document.getElementById('newPassword').value = '';
+    await loadUsers();
+    await loadDashboard();
+  } catch (e) {
+    msg('userMsg', e.message, 'danger');
   }
 }
 
-window.excluirUsuario = async function(id){
-  const atual = requireAdmin()
-  if(!confirm('Deseja realmente excluir este usuário?')) return
-
-  const { data: target } = await supabase.from('usuarios').select('*').eq('id', id).maybeSingle()
-  if(target && target.id === atual.id){
-    showMsg('userMsg', 'Você não pode excluir o próprio usuário logado.')
-    return
+async function saveUser(id) {
+  ensureAdmin();
+  try {
+    const username = document.getElementById(`u_name_${id}`).value.trim();
+    const password = document.getElementById(`u_pass_${id}`).value.trim();
+    const role = document.getElementById(`u_role_${id}`).value;
+    const active = document.getElementById(`u_active_${id}`).value === '1';
+    await api(`/api/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ username, password, role, active })
+    });
+    msg('userMsg', 'Usuário atualizado com sucesso.', 'success');
+    await loadUsers();
+  } catch (e) {
+    msg('userMsg', e.message, 'danger');
   }
+}
 
-  const { error } = await supabase.from('usuarios').delete().eq('id', id)
-  showMsg('userMsg', error ? 'Erro ao excluir usuário.' : 'Usuário excluído com sucesso.')
-  if(!error){
-    await carregarUsuarios()
-    await carregarResumoGeral()
+async function deleteUser(id) {
+  ensureAdmin();
+  if (!confirm('Deseja realmente excluir este usuário?')) return;
+  try {
+    await api(`/api/users/${id}`, { method: 'DELETE' });
+    msg('userMsg', 'Usuário excluído com sucesso.', 'success');
+    await loadUsers();
+    await loadDashboard();
+  } catch (e) {
+    msg('userMsg', e.message, 'danger');
   }
 }
 
-window.exportarExcel = async function(){
-  requireAdmin()
-  const { data: registros } = await supabase.from('registros').select('*').order('data', { ascending: true })
-  const rows = registros || []
-
-  const abaRegistros = rows.map(r => ({
-    'Usuário': r.usuario,
-    'Tipo': r.tipo,
-    'Data': formatDateBR(r.data),
-    'Hora': formatTimeBR(r.data),
-    'Latitude': r.latitude || '',
-    'Longitude': r.longitude || '',
-    'Observação': r.observacao || ''
-  }))
-
-  const agrupado = {}
-  for (const r of rows) {
-    const dataBr = formatDateBR(r.data)
-    const chave = `${r.usuario}__${dataBr}`
-
-    if (!agrupado[chave]) {
-      agrupado[chave] = {
-        usuario: r.usuario,
-        data: dataBr,
-        entrada: '', saidaAlmoco: '', voltaAlmoco: '', saida: '',
-        entradaISO: null, saidaAlmocoISO: null, voltaAlmocoISO: null, saidaISO: null
-      }
-    }
-
-    const hora = formatTimeBR(r.data)
-    if (r.tipo === 'Entrada' && !agrupado[chave].entrada) {
-      agrupado[chave].entrada = hora
-      agrupado[chave].entradaISO = r.data
-    }
-    if (r.tipo === 'Saída Almoço' && !agrupado[chave].saidaAlmoco) {
-      agrupado[chave].saidaAlmoco = hora
-      agrupado[chave].saidaAlmocoISO = r.data
-    }
-    if (r.tipo === 'Volta Almoço' && !agrupado[chave].voltaAlmoco) {
-      agrupado[chave].voltaAlmoco = hora
-      agrupado[chave].voltaAlmocoISO = r.data
-    }
-    if (r.tipo === 'Saída') {
-      agrupado[chave].saida = hora
-      agrupado[chave].saidaISO = r.data
-    }
-  }
-
-  const cfg = await getConfiguracoes()
-  const jornadaPadrao = Number(cfg.jornada_horas || 8)
-
-  const resumoDiario = Object.values(agrupado).map(item => {
-    let workedHours = 0
-    if (item.entradaISO && item.saidaISO) {
-      workedHours = (new Date(item.saidaISO) - new Date(item.entradaISO)) / 1000 / 60 / 60
-    }
-    if (item.saidaAlmocoISO && item.voltaAlmocoISO) {
-      workedHours -= (new Date(item.voltaAlmocoISO) - new Date(item.saidaAlmocoISO)) / 1000 / 60 / 60
-    }
-    workedHours = Math.max(0, workedHours)
-    const extras = Math.max(0, workedHours - jornadaPadrao)
-    const faltantes = Math.max(0, jornadaPadrao - workedHours)
-
-    return {
-      'Usuário': item.usuario,
-      'Data': item.data,
-      'Primeira Entrada': item.entrada,
-      'Saída Almoço': item.saidaAlmoco,
-      'Volta Almoço': item.voltaAlmoco,
-      'Saída Final': item.saida,
-      'Horas Trabalhadas': horasToHM(workedHours),
-      'Horas Extras': horasToHM(extras),
-      'Horas Faltantes': horasToHM(faltantes)
-    }
-  })
-
-  const mensalMap = {}
-  for (const linha of resumoDiario) {
-    const [dia, mes, ano] = linha['Data'].split('/')
-    const chave = `${linha['Usuário']}__${mes}/${ano}`
-    if (!mensalMap[chave]) {
-      mensalMap[chave] = { usuario: linha['Usuário'], mes: `${mes}/${ano}`, dias: 0, worked: 0, extras: 0, faltantes: 0 }
-    }
-
-    const parseHM = (txt) => {
-      const [h, m] = (txt || '00:00').split(':').map(Number)
-      return (h || 0) + ((m || 0) / 60)
-    }
-
-    mensalMap[chave].dias += 1
-    mensalMap[chave].worked += parseHM(linha['Horas Trabalhadas'])
-    mensalMap[chave].extras += parseHM(linha['Horas Extras'])
-    mensalMap[chave].faltantes += parseHM(linha['Horas Faltantes'])
-  }
-
-  const resumoMensal = Object.values(mensalMap).map(item => ({
-    'Usuário': item.usuario,
-    'Mês': item.mes,
-    'Dias Trabalhados': item.dias,
-    'Total Horas': horasToHM(item.worked),
-    'Total Extras': horasToHM(item.extras),
-    'Total Faltantes': horasToHM(item.faltantes)
-  }))
-
-  const wb = XLSX.utils.book_new()
-  const ws1 = XLSX.utils.json_to_sheet(abaRegistros)
-  const ws2 = XLSX.utils.json_to_sheet(resumoDiario)
-  const ws3 = XLSX.utils.json_to_sheet(resumoMensal)
-
-  ws1['!autofilter'] = { ref: 'A1:G1' }
-  ws2['!autofilter'] = { ref: 'A1:I1' }
-  ws3['!autofilter'] = { ref: 'A1:F1' }
-
-  ws1['!cols'] = [{wch:18},{wch:18},{wch:12},{wch:12},{wch:14},{wch:14},{wch:28}]
-  ws2['!cols'] = [{wch:18},{wch:12},{wch:16},{wch:16},{wch:16},{wch:14},{wch:18},{wch:16},{wch:18}]
-  ws3['!cols'] = [{wch:18},{wch:10},{wch:18},{wch:14},{wch:14},{wch:16}]
-
-  XLSX.utils.book_append_sheet(wb, ws1, 'Registros')
-  XLSX.utils.book_append_sheet(wb, ws2, 'Resumo Diário')
-  XLSX.utils.book_append_sheet(wb, ws3, 'Resumo Mensal')
-
-  const agora = new Date()
-  const nome = `Ponto_InnoLife_${String(agora.getMonth()+1).padStart(2,'0')}_${agora.getFullYear()}.xlsx`
-  XLSX.writeFile(wb, nome)
-}
-
-async function boot(){
-  const path = location.pathname.split('/').pop()
-
-  if(path === 'painel.html'){
-    const user = requireLogin()
-    document.getElementById('usuarioAtual').textContent = user.usuario
-    document.getElementById('perfilAtual').textContent = user.role
-    await carregarHoraAtual()
-    await carregarMeusRegistros()
-    await carregarResumoHoje()
-  }
-
-  if(path === 'admin.html'){
-    requireAdmin()
-    const cfg = await getConfiguracoes()
-    document.getElementById('jornadaHoras').value = cfg.jornada_horas ?? 8
-    document.getElementById('toleranciaMin').value = cfg.tolerancia_min ?? 10
-    await carregarResumoGeral()
-    await carregarUsuarios()
+async function saveSettings() {
+  ensureAdmin();
+  try {
+    const company_name = document.getElementById('companyName').value.trim();
+    const company_lat = Number(document.getElementById('companyLat').value);
+    const company_lng = Number(document.getElementById('companyLng').value);
+    const radius_m = Number(document.getElementById('radiusM').value);
+    const jornada_hours = Number(document.getElementById('jornadaHours').value);
+    const tolerancia_min = Number(document.getElementById('toleranciaMin').value);
+    await api('/api/settings', {
+      method: 'PUT',
+      body: JSON.stringify({ company_name, company_lat, company_lng, radius_m, jornada_hours, tolerancia_min })
+    });
+    msg('settingsMsg', 'Configurações salvas com sucesso.', 'success');
+    state.settings = await api('/api/settings');
+  } catch (e) {
+    msg('settingsMsg', e.message, 'danger');
   }
 }
-boot()
+
+async function closeMonth() {
+  ensureAdmin();
+  try {
+    const month_ref = document.getElementById('closeMonth').value;
+    await api('/api/closings', {
+      method: 'POST',
+      body: JSON.stringify({ month_ref })
+    });
+    msg('closingMsg', 'Mês fechado com sucesso.', 'success');
+    await loadDashboard();
+  } catch (e) {
+    msg('closingMsg', e.message, 'danger');
+  }
+}
+
+function exportExcel() {
+  ensureAdmin();
+  window.location.href = '/api/export.xlsx';
+}
+
+window.login = login;
+window.logout = logout;
+window.registerPoint = registerPoint;
+window.createUser = createUser;
+window.saveUser = saveUser;
+window.deleteUser = deleteUser;
+window.saveSettings = saveSettings;
+window.closeMonth = closeMonth;
+window.exportExcel = exportExcel;
+
+window.addEventListener('DOMContentLoaded', async () => {
+  const path = location.pathname;
+
+  if (path === '/' || path.endsWith('/index.html')) return;
+
+  try {
+    ensureAuth();
+    await loadMe();
+
+    const userName = document.getElementById('currentUser');
+    if (userName) userName.textContent = state.user.username;
+
+    const role = document.getElementById('currentRole');
+    if (role) role.textContent = state.user.role === 'admin' ? 'admin' : 'funcionário';
+
+    if (path.endsWith('/painel.html')) {
+      await loadMyRecords();
+      await loadTodaySummary();
+      await checkArea();
+      setInterval(checkArea, 15000);
+    }
+
+    if (path.endsWith('/admin.html')) {
+      ensureAdmin();
+      document.getElementById('companyName').value = state.settings.company_name;
+      document.getElementById('companyLat').value = state.settings.company_lat;
+      document.getElementById('companyLng').value = state.settings.company_lng;
+      document.getElementById('radiusM').value = state.settings.radius_m;
+      document.getElementById('jornadaHours').value = state.settings.jornada_hours;
+      document.getElementById('toleranciaMin').value = state.settings.tolerancia_min;
+      await loadDashboard();
+      await loadUsers();
+    }
+  } catch {}
+});
