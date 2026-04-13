@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <div>
+      <img src="logo.webp" class="logo" alt="Logo" style="max-width:120px;margin:0 0 10px 0">
+      <h2>Painel Admin</h2>
+      <span class="badge">Somente admin</span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="secondary" style="width:auto" onclick="voltarPainel()">Painel</button>
+      <button class="danger" style="width:auto" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Configurações</h3>
+      <div class="row">
+        <div>
+          <label class="small">Jornada diária (horas)</label>
+          <input id="jornadaHoras" type="number" value="8">
+        </div>
+        <div>
+          <label class="small">Tolerância atraso (minutos)</label>
+          <input id="toleranciaMin" type="number" value="10">
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <button onclick="salvarConfiguracoes()">Salvar configurações</button>
+      </div>
+      <div id="cfgMsg" class="notice hidden"></div>
+    </div>
+
+    <div class="card">
+      <h3>Fechamento mensal</h3>
+      <div class="row">
+        <div>
+          <label class="small">Mês</label>
+          <input id="mesFechamento" type="month">
+        </div>
+        <div style="display:flex;align-items:end">
+          <button onclick="fecharMes()">Fechar mês</button>
+        </div>
+      </div>
+      <div id="fechMsg" class="notice hidden"></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="topbar">
+      <h3>Relatório geral</h3>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button onclick="exportarCSV()" style="width:auto">Exportar CSV</button>
+        <button class="secondary" onclick="carregarResumoGeral()" style="width:auto">Atualizar resumo</button>
+      </div>
+    </div>
+    <div class="grid grid-3">
+      <div class="kpi"><strong>Total registros</strong><br><span id="kpiRegistros">-</span></div>
+      <div class="kpi"><strong>Funcionários</strong><br><span id="kpiUsuarios">-</span></div>
+      <div class="kpi"><strong>Meses fechados</strong><br><span id="kpiFechados">-</span></div>
+    </div>
+  </div>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

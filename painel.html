@@ -1,0 +1,64 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <div>
+      <img src="logo.webp" class="logo" alt="Logo" style="max-width:120px;margin:0 0 10px 0">
+      <h2>Painel do Funcionário</h2>
+      <span class="badge">Usuário: <strong id="usuarioAtual"></strong></span>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <button class="secondary" style="width:auto" onclick="irAdmin()">Admin</button>
+      <button class="danger" style="width:auto" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="grid grid-2">
+    <div class="card">
+      <h3>Registrar ponto</h3>
+      <p id="agora"></p>
+      <div class="actions">
+        <button onclick="registrarPonto('Entrada')">Entrada</button>
+        <button onclick="registrarPonto('Saída Almoço')">Saída almoço</button>
+        <button onclick="registrarPonto('Volta Almoço')">Volta almoço</button>
+        <button onclick="registrarPonto('Saída')">Saída</button>
+      </div>
+      <div style="margin-top:12px">
+        <input id="obs" placeholder="Observação opcional">
+      </div>
+      <div id="status" class="notice hidden"></div>
+    </div>
+
+    <div class="card">
+      <h3>Resumo de hoje</h3>
+      <div class="grid">
+        <div class="kpi"><strong>Horas trabalhadas</strong><br><span id="horasHoje">-</span></div>
+        <div class="kpi"><strong>Horas extras</strong><br><span id="extrasHoje">-</span></div>
+        <div class="kpi"><strong>Horas faltantes</strong><br><span id="faltantesHoje">-</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Meus registros</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Data</th><th>Tipo</th><th>Observação</th><th>Lat</th><th>Lng</th></tr>
+        </thead>
+        <tbody id="tabelaRegistros"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
