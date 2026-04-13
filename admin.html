@@ -1,1 +1,104 @@
-<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Admin</title><link rel="icon" href="favicon.ico"><link rel="stylesheet" href="style.css"></head><body><div class="container"><div class="topbar"><div><img src="logo.webp" class="logo" alt="Logo" style="max-width:120px;margin:0 0 10px 0"><h2>Painel Admin</h2><span class="badge">Somente admin</span></div><div class="toolbar"><button class="secondary" onclick="voltarPainel()">Painel</button><button class="danger" onclick="logout()">Sair</button></div></div><div class="grid grid-3"><div class="kpi"><strong>Total registros</strong><br><span id="kpiRegistros">-</span></div><div class="kpi"><strong>Usuários</strong><br><span id="kpiUsuarios">-</span></div><div class="kpi"><strong>Meses fechados</strong><br><span id="kpiFechados">-</span></div></div><div class="grid grid-2" style="margin-top:16px"><div class="glass card"><h3>Configurações</h3><div class="row"><div><label>Jornada diária (horas)</label><input id="jornadaHoras" type="number" value="8"></div><div><label>Tolerância atraso (minutos)</label><input id="toleranciaMin" type="number" value="10"></div></div><div style="margin-top:12px"><button onclick="salvarConfiguracoes()">Salvar configurações</button></div><div id="cfgMsg" class="notice hidden" style="margin-top:12px"></div></div><div class="glass card"><h3>Fechamento mensal</h3><div class="row"><div><label>Mês</label><input id="mesFechamento" type="month"></div><div style="display:flex;align-items:end"><button onclick="fecharMes()">Fechar mês</button></div></div><div class="toolbar" style="margin-top:12px"><button class="success" onclick="exportarExcel()">Exportar Excel</button></div><div id="fechMsg" class="notice hidden" style="margin-top:12px"></div></div></div><div class="glass card" style="margin-top:16px"><h3>Criar usuário</h3><div class="row"><div><label>Usuário</label><input id="novoUsuario" placeholder="Nome de usuário"></div><div><label>Senha</label><input id="novaSenha" placeholder="Senha"></div></div><div class="row" style="margin-top:12px"><div><label>Perfil</label><select id="novoPerfil"><option value="funcionario">Funcionário</option><option value="admin">Admin</option></select></div><div style="display:flex;align-items:end"><button onclick="criarUsuario()">Criar</button></div></div><div id="userMsg" class="notice hidden" style="margin-top:12px"></div></div><div class="glass card" style="margin-top:16px"><div class="topbar"><h3>Gerenciar usuários</h3><div class="toolbar"><button class="secondary" onclick="carregarUsuarios()">Atualizar usuários</button></div></div><div class="table-wrap"><table><thead><tr><th>ID</th><th>Usuário</th><th>Senha</th><th>Perfil</th><th>Ações</th></tr></thead><tbody id="tabelaUsuarios"></tbody></table></div></div><div class="glass card" style="margin-top:16px"><div class="topbar"><h3>Editar pontos dos funcionários</h3><div class="toolbar"><button class="secondary" onclick="carregarRegistrosAdmin()">Atualizar pontos</button></div></div><div id="recordMsg" class="notice hidden" style="margin-bottom:12px"></div><div class="table-wrap"><table><thead><tr><th>Usuário</th><th>Data</th><th>Tipo</th><th>Observação</th><th>Ações</th></tr></thead><tbody id="tabelaRegistrosAdmin"></tbody></table></div></div></div><script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script><script type="module" src="app.js"></script></body></html>
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin</title>
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="container">
+  <div class="topbar">
+    <div>
+      <img src="logo.webp" class="logo" alt="Logo" style="max-width:120px;margin:0 0 10px 0">
+      <h2>Painel Admin</h2>
+      <span class="badge">Somente admin</span>
+    </div>
+    <div class="toolbar">
+      <button class="secondary" onclick="voltarPainel()">Painel</button>
+      <button class="danger" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="grid grid-3">
+    <div class="kpi"><strong>Total registros</strong><br><span id="kpiRegistros">-</span></div>
+    <div class="kpi"><strong>Usuários</strong><br><span id="kpiUsuarios">-</span></div>
+    <div class="kpi"><strong>Meses fechados</strong><br><span id="kpiFechados">-</span></div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:16px">
+    <div class="glass card">
+      <h3>Configurações</h3>
+      <div class="row">
+        <div><label>Jornada diária (horas)</label><input id="jornadaHoras" type="number" value="8"></div>
+        <div><label>Tolerância atraso (minutos)</label><input id="toleranciaMin" type="number" value="10"></div>
+      </div>
+      <div style="margin-top:12px"><button onclick="salvarConfiguracoes()">Salvar configurações</button></div>
+      <div id="cfgMsg" class="notice hidden" style="margin-top:12px"></div>
+    </div>
+
+    <div class="glass card">
+      <h3>Fechamento mensal</h3>
+      <div class="row">
+        <div><label>Mês</label><input id="mesFechamento" type="month"></div>
+        <div style="display:flex;align-items:end"><button onclick="fecharMes()">Fechar mês</button></div>
+      </div>
+      <div class="toolbar" style="margin-top:12px">
+        <button class="success" onclick="exportarExcel()">Exportar Excel</button>
+      </div>
+      <div id="fechMsg" class="notice hidden" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div class="glass card" style="margin-top:16px">
+    <h3>Criar usuário</h3>
+    <div class="row">
+      <div><label>Usuário</label><input id="novoUsuario" placeholder="Nome de usuário"></div>
+      <div><label>Senha</label><input id="novaSenha" placeholder="Senha"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div>
+        <label>Perfil</label>
+        <select id="novoPerfil">
+          <option value="funcionario">Funcionário</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:end"><button onclick="criarUsuario()">Criar</button></div>
+    </div>
+    <div id="userMsg" class="notice hidden" style="margin-top:12px"></div>
+  </div>
+
+  <div class="glass card" style="margin-top:16px">
+    <div class="topbar">
+      <h3>Gerenciar usuários</h3>
+      <div class="toolbar"><button class="secondary" onclick="carregarUsuarios()">Atualizar usuários</button></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Usuário</th><th>Senha</th><th>Perfil</th><th>Ações</th></tr></thead>
+        <tbody id="tabelaUsuarios"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="glass card" style="margin-top:16px">
+    <div class="topbar">
+      <h3>Editar pontos dos funcionários</h3>
+      <div class="toolbar"><button class="secondary" onclick="carregarRegistrosAdmin()">Atualizar pontos</button></div>
+    </div>
+    <div id="recordMsg" class="notice hidden" style="margin-bottom:12px"></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Usuário</th><th>Data</th><th>Tipo</th><th>Observação</th><th>Ações</th></tr></thead>
+        <tbody id="tabelaRegistrosAdmin"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>
