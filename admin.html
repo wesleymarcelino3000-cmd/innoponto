@@ -6,6 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin</title>
 <link rel="stylesheet" href="style.css">
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
 </head>
 <body>
 <div class="container">
@@ -15,9 +16,9 @@
       <h2>Painel Admin</h2>
       <span class="badge">Somente admin</span>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button class="secondary" style="width:auto" onclick="voltarPainel()">Painel</button>
-      <button class="danger" style="width:auto" onclick="logout()">Sair</button>
+    <div class="toolbar">
+      <button class="secondary" onclick="voltarPainel()">Painel</button>
+      <button class="danger" onclick="logout()">Sair</button>
     </div>
   </div>
 
@@ -26,11 +27,11 @@
       <h3>Configurações</h3>
       <div class="row">
         <div>
-          <label class="small">Jornada diária (horas)</label>
+          <label>Jornada diária (horas)</label>
           <input id="jornadaHoras" type="number" value="8">
         </div>
         <div>
-          <label class="small">Tolerância atraso (minutos)</label>
+          <label>Tolerância atraso (minutos)</label>
           <input id="toleranciaMin" type="number" value="10">
         </div>
       </div>
@@ -44,7 +45,7 @@
       <h3>Fechamento mensal</h3>
       <div class="row">
         <div>
-          <label class="small">Mês</label>
+          <label>Mês</label>
           <input id="mesFechamento" type="month">
         </div>
         <div style="display:flex;align-items:end">
@@ -57,16 +58,63 @@
 
   <div class="card" style="margin-top:16px">
     <div class="topbar">
-      <h3>Relatório geral</h3>
-      <div style="display:flex;gap:10px;flex-wrap:wrap">
-        <button onclick="exportarCSV()" style="width:auto">Exportar CSV</button>
-        <button class="secondary" onclick="carregarResumoGeral()" style="width:auto">Atualizar resumo</button>
+      <h3>Exportação</h3>
+      <div class="toolbar">
+        <button class="success" onclick="exportarExcel()">Exportar Excel</button>
+        <button class="secondary" onclick="carregarResumoGeral()">Atualizar resumo</button>
       </div>
     </div>
     <div class="grid grid-3">
       <div class="kpi"><strong>Total registros</strong><br><span id="kpiRegistros">-</span></div>
-      <div class="kpi"><strong>Funcionários</strong><br><span id="kpiUsuarios">-</span></div>
+      <div class="kpi"><strong>Usuários</strong><br><span id="kpiUsuarios">-</span></div>
       <div class="kpi"><strong>Meses fechados</strong><br><span id="kpiFechados">-</span></div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Criar usuário</h3>
+    <div class="user-form">
+      <div>
+        <label>Usuário</label>
+        <input id="novoUsuario" placeholder="Nome de usuário">
+      </div>
+      <div>
+        <label>Senha</label>
+        <input id="novaSenha" placeholder="Senha">
+      </div>
+      <div>
+        <label>Perfil</label>
+        <select id="novoPerfil">
+          <option value="funcionario">Funcionário</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div>
+        <button onclick="criarUsuario()">Criar</button>
+      </div>
+    </div>
+    <div id="userMsg" class="notice hidden"></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <div class="topbar">
+      <h3>Gerenciar usuários</h3>
+      <div class="toolbar">
+        <button class="secondary" onclick="carregarUsuarios()">Atualizar usuários</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Usuário</th>
+            <th>Senha</th>
+            <th>Perfil</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabelaUsuarios"></tbody>
+      </table>
     </div>
   </div>
 </div>

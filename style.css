@@ -1,20 +1,166 @@
-body{font-family:Arial;background:#071120;color:#fff;text-align:center}
-button{padding:12px;margin:6px;border-radius:10px;border:none;background:#4ade80;font-weight:bold}
 
-/* ANIMAÇÃO PREMIUM */
+:root{
+  --bg:#06101f;
+  --bg2:#0a1730;
+  --card:#0c1b33;
+  --card2:#102241;
+  --text:#edf4ff;
+  --muted:#a9bad8;
+  --primary:#79b8ff;
+  --primary2:#5ca5f2;
+  --accent:#d9ecff;
+  --success:#22c55e;
+  --danger:#ef4444;
+  --border:#1e3a67;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Arial,Helvetica,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(121,184,255,.10), transparent 25%),
+    radial-gradient(circle at bottom right, rgba(92,165,242,.10), transparent 35%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+}
+.container{max-width:1200px;margin:0 auto;padding:18px}
+.card{
+  background:linear-gradient(180deg,rgba(16,34,65,.98),rgba(12,27,51,.98));
+  border:1px solid var(--border);
+  border-radius:22px;
+  padding:18px;
+  box-shadow:0 18px 45px rgba(0,0,0,.28);
+  animation:fadeUp .28s ease;
+}
+.center-card{max-width:460px;margin:40px auto}
+.logo{max-width:160px;display:block;margin:0 auto 12px}
+h1,h2,h3{margin:0 0 12px}
+p{color:var(--muted)}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+input,select,button{
+  width:100%;
+  padding:12px 14px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#08162d;
+  color:var(--text);
+  font-size:15px;
+}
+button{
+  cursor:pointer;
+  background:linear-gradient(180deg,var(--accent),var(--primary));
+  color:#0b1930;
+  font-weight:700;
+  transition:transform .12s ease, filter .12s ease;
+}
+button:hover{transform:translateY(-1px);filter:brightness(1.03)}
+button.secondary{background:#142746;color:var(--text)}
+button.danger{background:linear-gradient(180deg,#f87171,#ef4444);color:#fff}
+button.success{background:linear-gradient(180deg,#4ade80,#22c55e);color:#052e16}
+.grid{display:grid;gap:16px}
+.grid-2{grid-template-columns:1.25fr 1fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap}
+.toolbar button{width:auto}
+.badge{
+  display:inline-flex;align-items:center;gap:8px;
+  background:#08162d;border:1px solid var(--border);
+  padding:8px 12px;border-radius:999px;color:var(--muted);font-size:13px
+}
+.table-wrap{overflow:auto}
+table{
+  width:100%;border-collapse:collapse;background:#08162d;border-radius:14px;overflow:hidden
+}
+th,td{padding:10px 12px;border-bottom:1px solid #18345c;text-align:left;font-size:14px}
+th{color:#dbeafe;background:#0b1d3b}
+.hidden{display:none!important}
+.small{font-size:13px;color:var(--muted)}
+.kpi{
+  background:#08162d;border:1px solid var(--border);
+  border-radius:14px;padding:14px
+}
+.notice{
+  padding:10px 12px;border-radius:12px;background:#08162d;
+  border:1px solid var(--border);margin-top:10px
+}
+.user-form{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:10px;align-items:end}
+.user-actions{display:flex;gap:8px;flex-wrap:wrap}
+code{
+  background:#08162d;padding:2px 6px;border-radius:6px;border:1px solid var(--border);color:#dbeafe
+}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@media (max-width:900px){.grid-2,.grid-3,.actions,.row,.user-form{grid-template-columns:1fr}}
+
+/* animação premium ponto */
 .ponto-overlay {
   position: fixed;
   inset: 0;
   background: rgba(3, 10, 25, 0.45);
-  display:flex;align-items:center;justify-content:center;
-  z-index:9999;
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: overlayFadeIn 0.25s ease;
 }
-.ponto-modal{
-  background:#0c1b33;
-  padding:30px;
-  border-radius:20px;
+.ponto-modal {
+  width: min(92vw, 340px);
+  background: linear-gradient(180deg, #102241, #0c1b33);
+  border: 1px solid #1f3b68;
+  border-radius: 24px;
+  padding: 28px 22px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  animation: modalPop 0.35s ease;
 }
-.ponto-check{
-  font-size:50px;
-  color:#4ade80;
+.ponto-check-wrap {
+  width: 86px;
+  height: 86px;
+  margin: 0 auto 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at top, #4ade80, #22c55e);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.35);
+  position: relative;
 }
+.ponto-check-wrap::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+  border: 2px solid rgba(74, 222, 128, 0.25);
+  animation: pulseRing 1.4s ease-out infinite;
+}
+.ponto-check {
+  font-size: 42px;
+  color: #052e16;
+  font-weight: 900;
+  transform: scale(0.4);
+  opacity: 0;
+  animation: checkPop 0.35s ease 0.15s forwards;
+}
+.ponto-titulo {
+  font-size: 22px;
+  font-weight: 700;
+  color: #edf4ff;
+  margin-bottom: 8px;
+}
+.ponto-texto {
+  font-size: 14px;
+  color: #a8b8d8;
+  line-height: 1.5;
+}
+.ponto-overlay.saindo { animation: overlayFadeOut 0.25s ease forwards; }
+.ponto-overlay.saindo .ponto-modal { animation: modalOut 0.25s ease forwards; }
+@keyframes overlayFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes overlayFadeOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes modalPop { 0% { opacity: 0; transform: scale(0.88) translateY(14px); } 100% { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes modalOut { to { opacity: 0; transform: scale(0.94) translateY(10px); } }
+@keyframes checkPop { 0% { opacity: 0; transform: scale(0.4) rotate(-12deg); } 70% { opacity: 1; transform: scale(1.12) rotate(0deg); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes pulseRing { 0% { transform: scale(0.9); opacity: 0.55; } 100% { transform: scale(1.25); opacity: 0; } }

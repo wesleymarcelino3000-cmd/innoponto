@@ -12,12 +12,13 @@
   <div class="topbar">
     <div>
       <img src="logo.webp" class="logo" alt="Logo" style="max-width:120px;margin:0 0 10px 0">
-      <h2>Painel do Funcionário</h2>
+      <h2>Painel</h2>
       <span class="badge">Usuário: <strong id="usuarioAtual"></strong></span>
+      <span class="badge">Perfil: <strong id="perfilAtual"></strong></span>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap">
-      <button class="secondary" style="width:auto" onclick="irAdmin()">Admin</button>
-      <button class="danger" style="width:auto" onclick="logout()">Sair</button>
+    <div class="toolbar">
+      <button class="secondary" onclick="irAdmin()">Admin</button>
+      <button class="danger" onclick="logout()">Sair</button>
     </div>
   </div>
 
@@ -32,6 +33,7 @@
         <button onclick="registrarPonto('Saída')">Saída</button>
       </div>
       <div style="margin-top:12px">
+        <label>Observação</label>
         <input id="obs" placeholder="Observação opcional">
       </div>
       <div id="status" class="notice hidden"></div>
@@ -52,7 +54,7 @@
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Data</th><th>Tipo</th><th>Observação</th><th>Lat</th><th>Lng</th></tr>
+          <tr><th>Data</th><th>Tipo</th><th>Observação</th><th>Latitude</th><th>Longitude</th></tr>
         </thead>
         <tbody id="tabelaRegistros"></tbody>
       </table>
