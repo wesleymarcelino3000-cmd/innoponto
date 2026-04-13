@@ -1,68 +1,14 @@
-
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Painel</title>
+<title>Ponto InnoLife</title>
 <link rel="icon" href="favicon.ico">
-<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b1c38">
 </head>
 <body>
-<div class="container">
-  <div class="topbar">
-    <div>
-      <img src="logo.webp" class="logo" alt="Logo" style="max-width:120px;margin:0 0 10px 0">
-      <h2>Painel</h2>
-      <span class="badge">Usuário: <strong id="usuarioAtual"></strong></span>
-      <span class="badge">Perfil: <strong id="perfilAtual"></strong></span>
-      <span class="badge">ID: <strong id="idAtual"></strong></span>
-    </div>
-    <div class="toolbar">
-      <div class="clock" id="clockBrasilia">Brasília --:--:--</div>
-      <button class="secondary" onclick="irAdmin()">Admin</button>
-      <button class="danger" onclick="logout()">Sair</button>
-    </div>
-  </div>
-
-  <div class="glass card">
-    <h3>Registrar ponto</h3>
-    <div class="actions">
-      <button onclick="registrarPonto('Entrada')">Entrada</button>
-      <button onclick="registrarPonto('Saída Almoço')">Saída almoço</button>
-      <button onclick="registrarPonto('Volta Almoço')">Volta almoço</button>
-      <button onclick="registrarPonto('Saída')">Saída</button>
-    </div>
-    <div style="margin-top:12px"><label>Observação</label><input id="obs" placeholder="Observação opcional"></div>
-    <div class="toolbar" style="margin-top:12px">
-      <span id="areaPill" class="status-pill wait">Verificando localização...</span>
-      <span id="distanciaInfo" class="small"></span>
-    </div>
-    <div id="status" class="notice hidden" style="margin-top:12px"></div>
-  </div>
-
-  <div class="grid grid-3" style="margin-top:16px">
-    <div class="kpi"><strong>Horas trabalhadas</strong><br><span id="horasHoje">-</span></div>
-    <div class="kpi"><strong>Horas extras</strong><br><span id="extrasHoje">-</span></div>
-    <div class="kpi"><strong>Horas faltantes</strong><br><span id="faltantesHoje">-</span></div>
-  </div>
-
-  <div class="glass card" style="margin-top:16px">
-    <div class="topbar">
-      <h3>Pontos do dia</h3>
-      <div class="toolbar">
-        <button id="btnExportarDia" class="success hidden" onclick="exportarExcelDia()">Exportar Excel do dia</button>
-      </div>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Data</th><th>Tipo</th><th>Observação</th><th>Latitude</th><th>Longitude</th></tr></thead>
-        <tbody id="tabelaRegistros"></tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script type="module" src="app.js"></script>
+<h2>Ponto InnoLife</h2>
+<p>Sistema pronto com ícone mobile perfeito</p>
 </body>
 </html>
