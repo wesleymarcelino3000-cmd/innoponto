@@ -399,7 +399,16 @@ async function boot(){
     document.getElementById('usuarioAtual').textContent = user.usuario
     document.getElementById('perfilAtual').textContent = user.role
     document.getElementById('idAtual').textContent = user.funcionario_id || '-'
-    if(user.role === 'admin') document.getElementById('btnExportarDia').classList.remove('hidden')
+
+    const adminBtn = document.querySelector('button[onclick="irAdmin()"]')
+    if(user.role !== 'admin' && adminBtn){
+      adminBtn.style.display = 'none'
+    }
+
+    if(user.role === 'admin'){
+      document.getElementById('btnExportarDia').classList.remove('hidden')
+    }
+
     startBrasiliaClock()
     await carregarRegistrosDoDia()
     await carregarResumoHoje()
