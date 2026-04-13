@@ -2,27 +2,28 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ponto InnoLife</title>
-  <link rel="icon" href="favicon.ico">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ponto InnoLife</title>
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <div class="glass glow card center">
-      <img src="logo.webp" class="logo" alt="Logo">
-      <h1>Ponto InnoLife</h1>
-      <p>Versão empresa completa.</p>
-      <div class="grid">
-        <div><label>Usuário</label><input id="username" placeholder="Usuário"></div>
-        <div><label>Senha</label><input id="password" type="password" placeholder="Senha"></div>
-        <button onclick="login()">Entrar</button>
-        <div class="small">Acesso inicial: admin / 1234</div>
-        <div id="loginMsg" class="notice hidden"></div>
-      </div>
+<div class="container">
+  <div class="glass card center">
+    <img src="logo.webp" class="logo" alt="Logo">
+    <h1>Ponto InnoLife</h1>
+    <p>Versão máxima sem Node, usando Supabase.</p>
+    <div class="grid">
+      <div><label>Usuário</label><input id="user" placeholder="Usuário"></div>
+      <div><label>Senha</label><input id="pass" type="password" placeholder="Senha"></div>
+      <button onclick="login()">Entrar</button>
+      <div class="small">Exemplo inicial: admin / 1234</div>
+      <div id="msg" class="notice hidden"></div>
     </div>
   </div>
-  <script src="app.js"></script>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

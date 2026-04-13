@@ -2,98 +2,91 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin</title>
-  <link rel="icon" href="favicon.ico">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin</title>
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <div class="topbar">
-      <div>
-        <img src="logo.webp" class="logo" alt="Logo" style="max-width:120px;margin:0 0 10px 0">
-        <h2>Painel Admin</h2>
-        <span class="badge">Usuário: <strong id="currentUser"></strong></span>
-      </div>
-      <div class="toolbar">
-        <button class="secondary" onclick="location.href='/painel.html'">Painel</button>
-        <button class="danger" onclick="logout()">Sair</button>
-      </div>
+<div class="container">
+  <div class="topbar">
+    <div>
+      <img src="logo.webp" class="logo" alt="Logo" style="max-width:120px;margin:0 0 10px 0">
+      <h2>Painel Admin</h2>
+      <span class="badge">Somente admin</span>
     </div>
-
-    <div class="grid grid-3">
-      <div class="glass glow kpi"><strong>Usuários</strong><br><span id="kpiUsers">0</span></div>
-      <div class="glass glow kpi"><strong>Registros</strong><br><span id="kpiRecords">0</span></div>
-      <div class="glass glow kpi"><strong>Meses fechados</strong><br><span id="kpiClosings">0</span></div>
-    </div>
-
-    <div class="grid grid-2" style="margin-top:18px">
-      <div class="glass glow card">
-        <h3>Configurações da empresa</h3>
-        <div class="grid">
-          <div><label>Nome da empresa</label><input id="companyName"></div>
-          <div class="row">
-            <div><label>Latitude</label><input id="companyLat" type="number" step="any"></div>
-            <div><label>Longitude</label><input id="companyLng" type="number" step="any"></div>
-          </div>
-          <div class="row">
-            <div><label>Raio permitido (m)</label><input id="radiusM" type="number"></div>
-            <div><label>Jornada diária (horas)</label><input id="jornadaHours" type="number" step="0.5"></div>
-          </div>
-          <div><label>Tolerância atraso (minutos)</label><input id="toleranciaMin" type="number"></div>
-          <button onclick="saveSettings()">Salvar configurações</button>
-          <div id="settingsMsg" class="notice hidden"></div>
-        </div>
-      </div>
-
-      <div class="glass glow card">
-        <h3>Fechamento mensal</h3>
-        <div class="grid">
-          <div><label>Mês</label><input id="closeMonth" type="month"></div>
-          <button onclick="closeMonth()">Fechar mês</button>
-          <button class="success" onclick="exportExcel()">Exportar Excel</button>
-          <div id="closingMsg" class="notice hidden"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="glass glow card" style="margin-top:18px">
-      <h3>Criar usuário</h3>
-      <div class="row">
-        <div><label>Usuário</label><input id="newUsername"></div>
-        <div><label>Senha</label><input id="newPassword"></div>
-      </div>
-      <div class="row" style="margin-top:12px">
-        <div>
-          <label>Perfil</label>
-          <select id="newRole">
-            <option value="employee">Funcionário</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-        <div style="display:flex;align-items:end">
-          <button onclick="createUser()">Criar</button>
-        </div>
-      </div>
-      <div id="userMsg" class="notice hidden" style="margin-top:12px"></div>
-    </div>
-
-    <div class="glass glow card" style="margin-top:18px">
-      <div class="panel-title">
-        <h3>Usuários</h3>
-        <span class="badge">Gerenciamento completo</span>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Usuário</th><th>Nova senha</th><th>Perfil</th><th>Status</th><th>Ações</th></tr>
-          </thead>
-          <tbody id="usersTable"></tbody>
-        </table>
-      </div>
+    <div class="toolbar">
+      <button class="secondary" onclick="voltarPainel()">Painel</button>
+      <button class="danger" onclick="logout()">Sair</button>
     </div>
   </div>
-  <script src="app.js"></script>
+
+  <div class="grid grid-3">
+    <div class="kpi"><strong>Total registros</strong><br><span id="kpiRegistros">-</span></div>
+    <div class="kpi"><strong>Usuários</strong><br><span id="kpiUsuarios">-</span></div>
+    <div class="kpi"><strong>Meses fechados</strong><br><span id="kpiFechados">-</span></div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:16px">
+    <div class="glass card">
+      <h3>Configurações</h3>
+      <div class="row">
+        <div><label>Jornada diária (horas)</label><input id="jornadaHoras" type="number" value="8"></div>
+        <div><label>Tolerância atraso (minutos)</label><input id="toleranciaMin" type="number" value="10"></div>
+      </div>
+      <div style="margin-top:12px">
+        <button onclick="salvarConfiguracoes()">Salvar configurações</button>
+      </div>
+      <div id="cfgMsg" class="notice hidden" style="margin-top:12px"></div>
+    </div>
+
+    <div class="glass card">
+      <h3>Fechamento mensal</h3>
+      <div class="row">
+        <div><label>Mês</label><input id="mesFechamento" type="month"></div>
+        <div style="display:flex;align-items:end"><button onclick="fecharMes()">Fechar mês</button></div>
+      </div>
+      <div class="toolbar" style="margin-top:12px">
+        <button class="success" onclick="exportarExcel()">Exportar Excel</button>
+      </div>
+      <div id="fechMsg" class="notice hidden" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <div class="glass card" style="margin-top:16px">
+    <h3>Criar usuário</h3>
+    <div class="row">
+      <div><label>Usuário</label><input id="novoUsuario" placeholder="Nome de usuário"></div>
+      <div><label>Senha</label><input id="novaSenha" placeholder="Senha"></div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div>
+        <label>Perfil</label>
+        <select id="novoPerfil">
+          <option value="funcionario">Funcionário</option>
+          <option value="admin">Admin</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:end"><button onclick="criarUsuario()">Criar</button></div>
+    </div>
+    <div id="userMsg" class="notice hidden" style="margin-top:12px"></div>
+  </div>
+
+  <div class="glass card" style="margin-top:16px">
+    <div class="topbar">
+      <h3>Gerenciar usuários</h3>
+      <div class="toolbar"><button class="secondary" onclick="carregarUsuarios()">Atualizar usuários</button></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Usuário</th><th>Senha</th><th>Perfil</th><th>Ações</th></tr></thead>
+        <tbody id="tabelaUsuarios"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

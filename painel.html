@@ -2,69 +2,60 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel</title>
-  <link rel="icon" href="favicon.ico">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel</title>
+<link rel="icon" href="favicon.ico">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <div class="topbar">
-      <div>
-        <img src="logo.webp" class="logo" alt="Logo" style="max-width:120px;margin:0 0 10px 0">
-        <h2>Painel do Funcionário</h2>
-        <span class="badge">Usuário: <strong id="currentUser"></strong></span>
-        <span class="badge">Perfil: <strong id="currentRole"></strong></span>
-      </div>
-      <div class="toolbar">
-        <button class="secondary" onclick="location.href='/admin.html'">Admin</button>
-        <button class="danger" onclick="logout()">Sair</button>
-      </div>
+<div class="container">
+  <div class="topbar">
+    <div>
+      <img src="logo.webp" class="logo" alt="Logo" style="max-width:120px;margin:0 0 10px 0">
+      <h2>Painel</h2>
+      <span class="badge">Usuário: <strong id="usuarioAtual"></strong></span>
+      <span class="badge">Perfil: <strong id="perfilAtual"></strong></span>
     </div>
-
-    <div class="glass glow hero" style="margin-bottom:18px">
-      <h2>Registrar ponto</h2>
-      <p>Controle por geolocalização com raio máximo configurável.</p>
-      <div class="actions">
-        <button onclick="registerPoint('Entrada')">Entrada</button>
-        <button onclick="registerPoint('Saída Almoço')">Saída almoço</button>
-        <button onclick="registerPoint('Volta Almoço')">Volta almoço</button>
-        <button onclick="registerPoint('Saída')">Saída</button>
-      </div>
-      <div class="grid" style="margin-top:16px">
-        <div><label>Observação</label><input id="obs" placeholder="Observação opcional"></div>
-      </div>
-      <div class="toolbar" style="margin-top:12px">
-        <span id="areaStatus" class="status-pill wait">Verificando área...</span>
-        <span id="areaText" class="small"></span>
-      </div>
-      <div id="statusMsg" class="notice hidden" style="margin-top:12px"></div>
-    </div>
-
-    <div class="grid grid-3">
-      <div class="glass glow kpi"><strong>Horas trabalhadas</strong><br><span id="workedHours">00:00</span></div>
-      <div class="glass glow kpi"><strong>Horas extras</strong><br><span id="extraHours">00:00</span></div>
-      <div class="glass glow kpi"><strong>Horas faltantes</strong><br><span id="missingHours">00:00</span></div>
-    </div>
-
-    <div class="glass glow card" style="margin-top:18px">
-      <div class="panel-title">
-        <h3>Meus registros</h3>
-        <span class="badge">Últimos 100</span>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th><th>Tipo</th><th>Observação</th><th>Latitude</th><th>Longitude</th><th>Distância</th>
-            </tr>
-          </thead>
-          <tbody id="myRecords"></tbody>
-        </table>
-      </div>
+    <div class="toolbar">
+      <button class="secondary" onclick="irAdmin()">Admin</button>
+      <button class="danger" onclick="logout()">Sair</button>
     </div>
   </div>
-  <script src="app.js"></script>
+
+  <div class="glass card">
+    <h3>Registrar ponto</h3>
+    <div class="actions">
+      <button onclick="registrarPonto('Entrada')">Entrada</button>
+      <button onclick="registrarPonto('Saída Almoço')">Saída almoço</button>
+      <button onclick="registrarPonto('Volta Almoço')">Volta almoço</button>
+      <button onclick="registrarPonto('Saída')">Saída</button>
+    </div>
+    <div style="margin-top:12px"><label>Observação</label><input id="obs" placeholder="Observação opcional"></div>
+    <div class="toolbar" style="margin-top:12px">
+      <span id="areaPill" class="status-pill wait">Verificando localização...</span>
+      <span id="distanciaInfo" class="small"></span>
+    </div>
+    <div id="status" class="notice hidden" style="margin-top:12px"></div>
+  </div>
+
+  <div class="grid grid-3" style="margin-top:16px">
+    <div class="kpi"><strong>Horas trabalhadas</strong><br><span id="horasHoje">-</span></div>
+    <div class="kpi"><strong>Horas extras</strong><br><span id="extrasHoje">-</span></div>
+    <div class="kpi"><strong>Horas faltantes</strong><br><span id="faltantesHoje">-</span></div>
+  </div>
+
+  <div class="glass card" style="margin-top:16px">
+    <h3>Meus registros</h3>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data</th><th>Tipo</th><th>Observação</th><th>Latitude</th><th>Longitude</th></tr></thead>
+        <tbody id="tabelaRegistros"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>
