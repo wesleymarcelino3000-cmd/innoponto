@@ -1,0 +1,3 @@
+Adicionado botão no admin: Gerar IDs faltantes.
+Ele cria IDs somente para usuários que ainda estão sem funcionario_id.
+Versão atualizada para 7.2 para forçar atualização.

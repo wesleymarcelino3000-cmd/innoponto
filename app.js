@@ -1,5 +1,5 @@
 
-const APP_VERSION = "7"
+const APP_VERSION = "7.2"
 
 function isIOS(){
   return /iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -337,6 +337,46 @@ window.carregarResumoGeral = async function(){
   set('kpiFechados', (fechamentos || []).length)
 }
 function gerarIdFuncionario(){ return 'FUNC-' + Date.now().toString().slice(-6) + Math.floor(Math.random()*90 + 10) }
+
+window.gerarIdsFaltantes = async function(){
+  requireAdmin()
+  const { data: usuarios, error } = await supabase.from('usuarios').select('id, funcionario_id, usuario').order('usuario', { ascending: true })
+  if(error){
+    showMsg('idsMsg', 'Erro ao buscar usuários sem ID.', false, 'danger')
+    return
+  }
+
+  const semId = (usuarios || []).filter(u => !u.funcionario_id || String(u.funcionario_id).trim() === '')
+  if(!semId.length){
+    showMsg('idsMsg', 'Todos os usuários já possuem ID.', false, 'success')
+    return
+  }
+
+  const idsExistentes = new Set((usuarios || []).map(u => u.funcionario_id).filter(Boolean))
+  let atualizados = 0
+
+  for(const user of semId){
+    let novoId = ''
+    do {
+      novoId = gerarIdFuncionario()
+    } while(idsExistentes.has(novoId))
+
+    const { error: updateError } = await supabase.from('usuarios').update({ funcionario_id: novoId }).eq('id', user.id)
+    if(!updateError){
+      idsExistentes.add(novoId)
+      atualizados++
+    }
+  }
+
+  if(atualizados > 0){
+    showMsg('idsMsg', `${atualizados} usuário(s) receberam ID automaticamente.`, false, 'success')
+    await carregarUsuarios()
+    await carregarResumoGeral()
+  } else {
+    showMsg('idsMsg', 'Não foi possível gerar os IDs faltantes.', false, 'danger')
+  }
+}
+
 
 window.criarUsuario = async function(){
   requireAdmin()
