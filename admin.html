@@ -2,15 +2,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Ponto">
-<meta name="theme-color" content="#071321">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icon-192.png">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin</title>
@@ -18,13 +9,11 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container admin-page">
+<div class="container">
   <div class="topbar">
     <div>
       <img src="logo.webp" class="logo" alt="Logo" style="max-width:120px;margin:0 0 10px 0">
-      <p class="eyebrow">Gestão completa</p>
       <h2>Painel Admin</h2>
-      <p class="hero-subtitle">Controle usuários, registros, fechamento mensal e exportações em um painel mais profissional.</p>
       <span class="badge">Somente admin</span>
     </div>
     <div class="toolbar">
@@ -33,15 +22,15 @@
     </div>
   </div>
 
-  <div class="hero-kpis grid grid-3">
-    <div class="kpi kpi-pro"><span class="kpi-label">Total de registros</span><span id="kpiRegistros" class="kpi-value">-</span><span class="kpi-foot">Movimentações registradas</span></div>
-    <div class="kpi kpi-pro"><span class="kpi-label">Usuários</span><span id="kpiUsuarios" class="kpi-value">-</span><span class="kpi-foot">Contas cadastradas no sistema</span></div>
-    <div class="kpi kpi-pro"><span class="kpi-label">Meses fechados</span><span id="kpiFechados" class="kpi-value">-</span><span class="kpi-foot">Períodos já consolidados</span></div>
+  <div class="grid grid-3">
+    <div class="kpi"><strong>Total registros</strong><br><span id="kpiRegistros">-</span></div>
+    <div class="kpi"><strong>Usuários</strong><br><span id="kpiUsuarios">-</span></div>
+    <div class="kpi"><strong>Meses fechados</strong><br><span id="kpiFechados">-</span></div>
   </div>
 
   <div class="grid grid-2" style="margin-top:16px">
-    <div class="glass card section-card">
-      <div class="section-head"><div><p class="section-tag">Preferências</p><h3>Configurações</h3></div><span class="section-chip">Admin</span></div>
+    <div class="glass card">
+      <h3>Configurações</h3>
       <div class="row">
         <div><label>Jornada diária (horas)</label><input id="jornadaHoras" type="number" value="8"></div>
         <div><label>Tolerância atraso (minutos)</label><input id="toleranciaMin" type="number" value="10"></div>
@@ -50,8 +39,8 @@
       <div id="cfgMsg" class="notice hidden" style="margin-top:12px"></div>
     </div>
 
-    <div class="glass card section-card">
-      <div class="section-head"><div><p class="section-tag">Operação</p><h3>Fechamento mensal</h3></div><span class="section-chip">Excel</span></div>
+    <div class="glass card">
+      <h3>Fechamento mensal</h3>
       <div class="row">
         <div><label>Mês</label><input id="mesFechamento" type="month"></div>
         <div style="display:flex;align-items:end"><button onclick="fecharMes()">Fechar mês</button></div>
@@ -63,8 +52,8 @@
     </div>
   </div>
 
-  <div class="glass card section-card" style="margin-top:16px">
-    <div class="section-head"><div><p class="section-tag">Cadastro</p><h3>Criar usuário</h3></div><span class="section-chip">Novo</span></div>
+  <div class="glass card" style="margin-top:16px">
+    <h3>Criar usuário</h3>
     <div class="row">
       <div><label>Usuário</label><input id="novoUsuario" placeholder="Nome de usuário"></div>
       <div><label>Senha</label><input id="novaSenha" placeholder="Senha"></div>
@@ -82,9 +71,9 @@
     <div id="userMsg" class="notice hidden" style="margin-top:12px"></div>
   </div>
 
-  <div class="glass card section-card" style="margin-top:16px">
-    <div class="topbar section-inline">
-      <div><p class="section-tag">Gestão</p><h3>Gerenciar usuários</h3></div>
+  <div class="glass card" style="margin-top:16px">
+    <div class="topbar">
+      <h3>Gerenciar usuários</h3>
       <div class="toolbar"><button class="secondary" onclick="carregarUsuarios()">Atualizar usuários</button></div>
     </div>
     <div class="table-wrap">
@@ -95,9 +84,9 @@
     </div>
   </div>
 
-  <div class="glass card section-card" style="margin-top:16px">
-    <div class="topbar section-inline">
-      <div><p class="section-tag">Registros</p><h3>Editar pontos dos funcionários</h3></div>
+  <div class="glass card" style="margin-top:16px">
+    <div class="topbar">
+      <h3>Editar pontos dos funcionários</h3>
       <div class="toolbar"><button class="secondary" onclick="carregarRegistrosAdmin()">Atualizar pontos</button></div>
     </div>
     <div id="recordMsg" class="notice hidden" style="margin-bottom:12px"></div>
@@ -110,6 +99,6 @@
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script type="module" src="app.js?v=7"></script>
+<script type="module" src="app.js"></script>
 </body>
 </html>

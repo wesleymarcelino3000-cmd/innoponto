@@ -1,59 +1,4 @@
 
-const APP_VERSION = "7"
-
-function isIOS(){
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent)
-}
-
-function isAndroid(){
-  return /Android/i.test(navigator.userAgent)
-}
-
-function atualizarVersaoLocalDefinitiva(){
-  const versaoSalva = localStorage.getItem("app_version")
-  if(versaoSalva !== APP_VERSION){
-    localStorage.setItem("app_version", APP_VERSION)
-  }
-}
-
-async function registrarServiceWorkerDefinitivo(){
-  if(!('serviceWorker' in navigator)) return
-  try {
-    const reg = await navigator.serviceWorker.register(`sw.js?v=${APP_VERSION}`, { updateViaCache: 'none' })
-
-    if(reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' })
-
-    reg.addEventListener('updatefound', () => {
-      const installing = reg.installing
-      if(!installing) return
-      installing.addEventListener('statechange', () => {
-        if(installing.state === 'installed' && navigator.serviceWorker.controller){
-          installing.postMessage({ type: 'SKIP_WAITING' })
-        }
-      })
-    })
-
-    let refreshing = false
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if(refreshing) return
-      refreshing = true
-      if(isIOS()) {
-        setTimeout(() => window.location.reload(), 700)
-      } else {
-        window.location.reload()
-      }
-    })
-
-    setInterval(() => {
-      reg.update().catch(()=>{})
-    }, isIOS() ? 45000 : 30000)
-  } catch(e) {
-    console.error('Erro ao registrar service worker', e)
-  }
-}
-
-
-
 import { SUPABASE_URL, SUPABASE_KEY, LOCAL_EMPRESA, LIMITE_METROS, TIMEZONE } from './config.js'
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -169,56 +114,6 @@ window.registrarPonto = async function(tipo){
   const fechamento = await supabase.from('fechamentos').select('*').eq('mes_ref', hojeMes).maybeSingle()
   if(fechamento.data){ showMsg('status', 'Este mês está fechado e não aceita novos registros.', false, 'danger'); return }
 
-  const registrosHoje = await buscarMeusRegistrosHoje()
-  const tiposHoje = registrosHoje.map(r => r.tipo)
-  const temEntrada = tiposHoje.includes('Entrada')
-  const temSaidaAlmoco = tiposHoje.includes('Saída Almoço')
-  const temVoltaAlmoco = tiposHoje.includes('Volta Almoço')
-  const temSaida = tiposHoje.includes('Saída')
-  const jaExisteTipoHoje = tiposHoje.includes(tipo)
-
-  if(jaExisteTipoHoje){
-    showMsg('status', `Você já registrou ${tipo.toLowerCase()} hoje. É permitido apenas um de cada tipo por dia.`, false, 'warning')
-    return
-  }
-
-  if(tipo === 'Saída Almoço'){
-    if(!temEntrada){
-      showMsg('status', 'Você precisa registrar a Entrada antes da Saída almoço.', false, 'warning')
-      return
-    }
-    if(temVoltaAlmoco || temSaida){
-      showMsg('status', 'A ordem do ponto está inválida para registrar Saída almoço agora.', false, 'warning')
-      return
-    }
-  }
-
-  if(tipo === 'Volta Almoço'){
-    if(!temEntrada){
-      showMsg('status', 'Você precisa registrar a Entrada antes da Volta almoço.', false, 'warning')
-      return
-    }
-    if(!temSaidaAlmoco){
-      showMsg('status', 'Você precisa registrar a Saída almoço antes da Volta almoço.', false, 'warning')
-      return
-    }
-    if(temSaida){
-      showMsg('status', 'Não é possível registrar Volta almoço depois da Saída final.', false, 'warning')
-      return
-    }
-  }
-
-  if(tipo === 'Saída'){
-    if(!temEntrada){
-      showMsg('status', 'Você precisa registrar a Entrada antes da Saída.', false, 'warning')
-      return
-    }
-    if(temSaidaAlmoco && !temVoltaAlmoco){
-      showMsg('status', 'Você precisa registrar a Volta almoço antes da Saída final.', false, 'warning')
-      return
-    }
-  }
-
   navigator.geolocation.getCurrentPosition(async pos=>{
     const latUser = pos.coords.latitude
     const lngUser = pos.coords.longitude
@@ -302,7 +197,6 @@ async function carregarRegistrosDoDia(){
   const tbody = document.getElementById('tabelaRegistros')
   if(!tbody) return
   const regs = await buscarMeusRegistrosHoje()
-  atualizarBotoesPonto(regs)
   tbody.innerHTML = regs.length ? regs.sort((a,b)=>new Date(b.data)-new Date(a.data)).map(r => `<tr><td>${formatDateTime(r.data)}</td><td>${r.tipo}</td><td>${r.observacao || '-'}</td><td>${r.latitude || '-'}</td><td>${r.longitude || '-'}</td></tr>`).join('') : '<tr><td colspan="5">Nenhum ponto registrado hoje.</td></tr>'
 }
 
@@ -401,7 +295,6 @@ window.carregarRegistrosAdmin = async function(){
   if(!tbody) return
   const { data } = await supabase.from('registros').select('*').order('data', { ascending: false }).limit(120)
   const regs = data || []
-  atualizarBotoesPonto(regs)
   tbody.innerHTML = regs.length ? regs.map(r => `
     <tr>
       <td><input id="r_usuario_${r.id}" value="${r.usuario ?? ''}"></td>
@@ -435,29 +328,6 @@ window.excluirRegistro = async function(id){
   const { error } = await supabase.from('registros').delete().eq('id', id)
   showMsg('recordMsg', error ? 'Erro ao excluir ponto.' : 'Ponto excluído com sucesso.', false, error ? 'danger' : 'success')
   if(!error) await carregarRegistrosAdmin()
-}
-
-
-function atualizarBotoesPonto(registros){
-  const tipos = registros.map(r => r.tipo)
-  const temEntrada = tipos.includes('Entrada')
-  const temSaidaAlmoco = tipos.includes('Saída Almoço')
-  const temVoltaAlmoco = tipos.includes('Volta Almoço')
-  const temSaida = tipos.includes('Saída')
-
-  const btns = {
-    'Entrada': document.querySelector("button[onclick=\"registrarPonto('Entrada')\"]"),
-    'Saída Almoço': document.querySelector("button[onclick=\"registrarPonto('Saída Almoço')\"]"),
-    'Volta Almoço': document.querySelector("button[onclick=\"registrarPonto('Volta Almoço')\"]"),
-    'Saída': document.querySelector("button[onclick=\"registrarPonto('Saída')\"]")
-  }
-
-  Object.values(btns).forEach(b => { if(b) b.disabled = false })
-
-  if(temEntrada) btns['Entrada'] && (btns['Entrada'].disabled = true)
-  if(!temEntrada || temSaidaAlmoco || temVoltaAlmoco || temSaida) btns['Saída Almoço'] && (btns['Saída Almoço'].disabled = true)
-  if(!temSaidaAlmoco || temVoltaAlmoco || temSaida) btns['Volta Almoço'] && (btns['Volta Almoço'].disabled = true)
-  if(!temEntrada || temSaida || (temSaidaAlmoco && !temVoltaAlmoco)) btns['Saída'] && (btns['Saída'].disabled = true)
 }
 
 function buildWorkbookFromRows(rows){
@@ -543,9 +413,7 @@ window.exportarExcel = async function(){
   XLSX.writeFile(wb, `Ponto_InnoLife_${brasiliaTodayKey().slice(5,7)}_${brasiliaTodayKey().slice(0,4)}.xlsx`)
 }
 
-async function atualizarVersaoLocalDefinitiva()
-registrarServiceWorkerDefinitivo()
-boot(){
+async function boot(){
   const path = location.pathname.split('/').pop()
   if(path === 'painel.html'){
     const user = requireLogin()
