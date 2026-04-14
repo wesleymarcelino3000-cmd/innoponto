@@ -1,0 +1,4 @@
+Correção aplicada:
+- app.js estava com a função boot quebrada no final
+- isso impedia carregar usuário, relógio e dados do painel
+- versão atualizada para 7.1 para forçar recarregamento
