@@ -1,5 +1,5 @@
 
-const APP_VERSION = "7.3"
+const APP_VERSION = "7.4"
 
 function isIOS(){
   return /iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -344,10 +344,14 @@ function gerarIdFuncionario(){ return 'FUNC-' + Date.now().toString().slice(-6) 
 function preencherSelectFuncionariosFechamento(usuarios){
   const select = document.getElementById('funcionarioFechamento')
   if(!select) return
-  const atual = select.value
+  const atual = String(select.value || '')
   const lista = (usuarios || []).filter(u => u.role === 'funcionario' || u.role === 'admin')
   select.innerHTML = '<option value="">Todos os funcionários</option>' + lista.map(u => `<option value="${u.usuario}">${u.usuario}${u.funcionario_id ? ` (${u.funcionario_id})` : ''}</option>`).join('')
-  if(atual) select.value = atual
+  if(atual && lista.some(u => u.usuario === atual)) {
+    select.value = atual
+  } else {
+    select.value = ''
+  }
 }
 
 function renderUsuariosAdmin(users){
@@ -607,12 +611,17 @@ window.exportarExcelDia = async function(){
 window.exportarExcel = async function(){
   requireAdmin()
   const mesSelecionado = document.getElementById('mesFechamento')?.value || ''
-  const funcionario = document.getElementById('funcionarioFechamento')?.value || ''
+  const funcionarioSelecionado = document.getElementById('funcionarioFechamento')?.value || ''
+  const exportarTodos = !funcionarioSelecionado || funcionarioSelecionado === 'todos'
   const { data: registros } = await supabase.from('registros').select('*').order('usuario', { ascending: true }).order('data', { ascending: true })
   let rows = registros || []
 
-  if(funcionario) rows = rows.filter(r => r.usuario === funcionario)
-  if(mesSelecionado) rows = rows.filter(r => String(r.data).slice(0,7) === mesSelecionado)
+  if(!exportarTodos){
+    rows = rows.filter(r => r.usuario === funcionarioSelecionado)
+  }
+  if(mesSelecionado){
+    rows = rows.filter(r => String(r.data).slice(0,7) === mesSelecionado)
+  }
 
   const { data: cfg } = await supabase.from('configuracoes').select('*').limit(1).maybeSingle()
   const jornadaPadrao = Number(cfg?.jornada_horas || 8)
@@ -634,6 +643,7 @@ window.exportarExcel = async function(){
   }
 
   const resumoGeral = []
+  const todosDetalhados = []
   const somaHM = (txt) => {
     const [h,m] = String(txt || '00:00').split(':').map(Number)
     return (h || 0) + ((m || 0)/60)
@@ -676,7 +686,16 @@ window.exportarExcel = async function(){
         'Horas Extras': horasToHM(extras),
         'Horas Faltantes': horasToHM(faltantes)
       }
+    }).sort((a,b) => {
+      const ua = String(a['Usuário'] || '')
+      const ub = String(b['Usuário'] || '')
+      if(ua !== ub) return ua.localeCompare(ub, 'pt-BR')
+      const [da,ma,aa] = String(a['Data']).split('/')
+      const [db,mb,ab] = String(b['Data']).split('/')
+      return new Date(`${aa}-${ma}-${da}`) - new Date(`${ab}-${mb}-${db}`)
     })
+
+    todosDetalhados.push(...resumoDiario)
 
     resumoGeral.push({
       'Usuário': usuario,
@@ -693,12 +712,22 @@ window.exportarExcel = async function(){
     XLSX.utils.book_append_sheet(wb, ws, nomeAba)
   }
 
+  if(exportarTodos){
+    const wsTodos = XLSX.utils.json_to_sheet(todosDetalhados)
+    wsTodos['!autofilter'] = { ref: 'A1:I1' }
+    wsTodos['!cols'] = [{wch:18},{wch:12},{wch:16},{wch:16},{wch:16},{wch:14},{wch:18},{wch:16},{wch:18}]
+    // Coloca a aba consolidada primeiro
+    wb.SheetNames.unshift('Todos Funcionários')
+    wb.Sheets['Todos Funcionários'] = wsTodos
+  }
+
   const wsResumo = XLSX.utils.json_to_sheet(resumoGeral)
   wsResumo['!autofilter'] = { ref: 'A1:E1' }
   wsResumo['!cols'] = [{wch:22},{wch:18},{wch:14},{wch:14},{wch:16}]
-  XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo Geral')
+  wb.SheetNames.unshift('Resumo Geral')
+  wb.Sheets['Resumo Geral'] = wsResumo
 
-  XLSX.writeFile(wb, `Ponto_InnoLife_${mesSelecionado || 'geral'}${funcionario ? '_' + funcionario : ''}.xlsx`)
+  XLSX.writeFile(wb, `Ponto_InnoLife_${mesSelecionado || 'geral'}${!exportarTodos ? '_' + funcionarioSelecionado : '_todos'}.xlsx`)
 }
 
 

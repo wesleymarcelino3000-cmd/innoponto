@@ -1,0 +1,1 @@
+Correção da versão 7.4:\n- exportar 'Todos os funcionários' agora gera uma aba consolidada 'Todos Funcionários'\n- mantém também uma aba separada para cada funcionário\n- adiciona 'Resumo Geral' como primeira aba\n- corrige seleção vazia do filtro de funcionário na exportação\n
