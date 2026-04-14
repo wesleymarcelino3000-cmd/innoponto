@@ -54,9 +54,16 @@
       <div class="section-head"><div><p class="section-tag">Operação</p><h3>Fechamento mensal</h3></div><span class="section-chip">Excel</span></div>
       <div class="row">
         <div><label>Mês</label><input id="mesFechamento" type="month"></div>
-        <div style="display:flex;align-items:end"><button onclick="fecharMes()">Fechar mês</button></div>
+        <div>
+          <label>Funcionário</label>
+          <select id="funcionarioFechamento">
+            <option value="">Todos os funcionários</option>
+          </select>
+        </div>
       </div>
       <div class="toolbar" style="margin-top:12px">
+        <button onclick="fecharMes()">Fechar mês</button>
+        <button class="secondary" onclick="fecharMesPorFuncionario()">Fechar por funcionário</button>
         <button class="success" onclick="exportarExcel()">Exportar Excel</button>
       </div>
       <div id="fechMsg" class="notice hidden" style="margin-top:12px"></div>
@@ -85,7 +92,18 @@
   <div class="glass card section-card" style="margin-top:16px">
     <div class="topbar section-inline">
       <div><p class="section-tag">Gestão</p><h3>Gerenciar usuários</h3></div>
-      <div class="toolbar"><button class="secondary" onclick="carregarUsuarios()">Atualizar usuários</button><button class="success" onclick="gerarIdsFaltantes()">Gerar IDs faltantes</button></div>
+      <div class="toolbar">
+        <input id="filtroUsuarioAdmin" placeholder="Filtrar por usuário" style="width:220px">
+        <select id="filtroPerfilAdmin" style="width:180px">
+          <option value="">Todos os perfis</option>
+          <option value="funcionario">Funcionário</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button class="secondary" onclick="aplicarFiltrosUsuarios()">Filtrar</button>
+        <button class="secondary" onclick="limparFiltrosUsuarios()">Limpar</button>
+        <button class="secondary" onclick="carregarUsuarios()">Atualizar usuários</button>
+        <button class="success" onclick="gerarIdsFaltantes()">Gerar IDs faltantes</button>
+      </div>
     </div>
     <div id="idsMsg" class="notice hidden" style="margin-bottom:12px"></div>
     <div class="table-wrap">
@@ -99,7 +117,20 @@
   <div class="glass card section-card" style="margin-top:16px">
     <div class="topbar section-inline">
       <div><p class="section-tag">Registros</p><h3>Editar pontos dos funcionários</h3></div>
-      <div class="toolbar"><button class="secondary" onclick="carregarRegistrosAdmin()">Atualizar pontos</button></div>
+      <div class="toolbar">
+        <input id="filtroRegistroUsuario" placeholder="Filtrar funcionário" style="width:220px">
+        <input id="filtroRegistroData" type="date" style="width:180px">
+        <select id="filtroRegistroTipo" style="width:180px">
+          <option value="">Todos os tipos</option>
+          <option value="Entrada">Entrada</option>
+          <option value="Saída Almoço">Saída Almoço</option>
+          <option value="Volta Almoço">Volta Almoço</option>
+          <option value="Saída">Saída</option>
+        </select>
+        <button class="secondary" onclick="aplicarFiltrosRegistros()">Filtrar</button>
+        <button class="secondary" onclick="limparFiltrosRegistros()">Limpar</button>
+        <button class="secondary" onclick="carregarRegistrosAdmin()">Atualizar pontos</button>
+      </div>
     </div>
     <div id="recordMsg" class="notice hidden" style="margin-bottom:12px"></div>
     <div class="table-wrap">
@@ -111,6 +142,6 @@
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script type="module" src="app.js?v=7.2"></script>
+<script type="module" src="app.js?v=7.3"></script>
 </body>
 </html>

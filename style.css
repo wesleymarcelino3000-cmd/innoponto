@@ -269,3 +269,19 @@ tbody tr:hover{
     font-size:30px;
   }
 }
+
+
+/* filtros admin */
+.toolbar input[type="date"],
+.toolbar input,
+.toolbar select{
+  max-width:220px;
+}
+@media (max-width:920px){
+  .toolbar input[type="date"],
+  .toolbar input,
+  .toolbar select{
+    max-width:100%;
+    width:100% !important;
+  }
+}

@@ -1,0 +1,6 @@
+Novidades da versão 7.3:
+- filtros no admin para usuários
+- filtros no admin para registros
+- fechamento por funcionário
+- exportação mensal organizada por funcionário
+- planilha com uma aba por funcionário + resumo geral

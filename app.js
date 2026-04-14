@@ -1,5 +1,5 @@
 
-const APP_VERSION = "7.2"
+const APP_VERSION = "7.3"
 
 function isIOS(){
   return /iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -57,6 +57,9 @@ async function registrarServiceWorkerDefinitivo(){
 import { SUPABASE_URL, SUPABASE_KEY, LOCAL_EMPRESA, LIMITE_METROS, TIMEZONE } from './config.js'
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
+
+let adminUsuariosCache = []
+let adminRegistrosCache = []
 
 function showMsg(id, text, hidden=false, kind=''){
   const el = document.getElementById(id)
@@ -320,8 +323,8 @@ window.fecharMes = async function(){
   const user = requireAdmin()
   const mes = document.getElementById('mesFechamento').value
   if(!mes){ showMsg('fechMsg','Selecione um mês.', false, 'warning'); return }
-  const { error } = await supabase.from('fechamentos').insert({ mes_ref: mes, fechado_por: user.usuario, fechado_em: brasiliaNowISO() })
-  showMsg('fechMsg', error ? 'Erro ao fechar mês. Talvez ele já esteja fechado.' : 'Mês fechado com sucesso.', false, error ? 'danger' : 'success')
+  const { error } = await supabase.from('fechamentos').insert({ mes_ref: mes, fechado_por: user.usuario, fechado_em: brasiliaNowISO(), usuario_ref: null })
+  showMsg('fechMsg', error ? 'Erro ao fechar mês. Talvez ele já esteja fechado.' : 'Mês fechado com sucesso para todos os funcionários.', false, error ? 'danger' : 'success')
   await carregarResumoGeral()
 }
 window.carregarResumoGeral = async function(){
@@ -337,6 +340,105 @@ window.carregarResumoGeral = async function(){
   set('kpiFechados', (fechamentos || []).length)
 }
 function gerarIdFuncionario(){ return 'FUNC-' + Date.now().toString().slice(-6) + Math.floor(Math.random()*90 + 10) }
+
+function preencherSelectFuncionariosFechamento(usuarios){
+  const select = document.getElementById('funcionarioFechamento')
+  if(!select) return
+  const atual = select.value
+  const lista = (usuarios || []).filter(u => u.role === 'funcionario' || u.role === 'admin')
+  select.innerHTML = '<option value="">Todos os funcionários</option>' + lista.map(u => `<option value="${u.usuario}">${u.usuario}${u.funcionario_id ? ` (${u.funcionario_id})` : ''}</option>`).join('')
+  if(atual) select.value = atual
+}
+
+function renderUsuariosAdmin(users){
+  const tbody = document.getElementById('tabelaUsuarios')
+  if(!tbody) return
+  tbody.innerHTML = users.length ? users.map(u => `
+    <tr>
+      <td>${u.funcionario_id || '-'}</td>
+      <td><input id="usuario_${u.id}" value="${u.usuario ?? ''}"></td>
+      <td><input id="senha_${u.id}" value="${u.senha ?? ''}"></td>
+      <td><select id="role_${u.id}"><option value="funcionario" ${u.role === 'funcionario' ? 'selected' : ''}>Funcionário</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></td>
+      <td><div class="toolbar"><button onclick="salvarUsuario('${u.id}')" style="width:auto">Salvar</button><button class="danger" onclick="excluirUsuario('${u.id}')" style="width:auto">Excluir</button></div></td>
+    </tr>`).join('') : '<tr><td colspan="5">Nenhum usuário.</td></tr>'
+}
+
+function renderRegistrosAdmin(regs){
+  const tbody = document.getElementById('tabelaRegistrosAdmin')
+  if(!tbody) return
+  tbody.innerHTML = regs.length ? regs.map(r => `
+    <tr>
+      <td><input id="r_usuario_${r.id}" value="${r.usuario ?? ''}"></td>
+      <td><input id="r_data_${r.id}" value="${r.data ?? ''}"></td>
+      <td>
+        <select id="r_tipo_${r.id}">
+          <option value="Entrada" ${r.tipo === 'Entrada' ? 'selected' : ''}>Entrada</option>
+          <option value="Saída Almoço" ${r.tipo === 'Saída Almoço' ? 'selected' : ''}>Saída Almoço</option>
+          <option value="Volta Almoço" ${r.tipo === 'Volta Almoço' ? 'selected' : ''}>Volta Almoço</option>
+          <option value="Saída" ${r.tipo === 'Saída' ? 'selected' : ''}>Saída</option>
+        </select>
+      </td>
+      <td><input id="r_obs_${r.id}" value="${r.observacao ?? ''}"></td>
+      <td><div class="toolbar"><button onclick="salvarRegistro('${r.id}')" style="width:auto">Salvar</button><button class="danger" onclick="excluirRegistro('${r.id}')" style="width:auto">Excluir</button></div></td>
+    </tr>`).join('') : '<tr><td colspan="5">Nenhum registro.</td></tr>'
+}
+
+window.aplicarFiltrosUsuarios = function(){
+  requireAdmin()
+  const nome = (document.getElementById('filtroUsuarioAdmin')?.value || '').trim().toLowerCase()
+  const perfil = (document.getElementById('filtroPerfilAdmin')?.value || '').trim()
+  const filtrados = adminUsuariosCache.filter(u => {
+    const okNome = !nome || String(u.usuario || '').toLowerCase().includes(nome) || String(u.funcionario_id || '').toLowerCase().includes(nome)
+    const okPerfil = !perfil || u.role === perfil
+    return okNome && okPerfil
+  })
+  renderUsuariosAdmin(filtrados)
+}
+
+window.limparFiltrosUsuarios = function(){
+  const nome = document.getElementById('filtroUsuarioAdmin')
+  const perfil = document.getElementById('filtroPerfilAdmin')
+  if(nome) nome.value = ''
+  if(perfil) perfil.value = ''
+  renderUsuariosAdmin(adminUsuariosCache)
+}
+
+window.aplicarFiltrosRegistros = function(){
+  requireAdmin()
+  const usuario = (document.getElementById('filtroRegistroUsuario')?.value || '').trim().toLowerCase()
+  const data = (document.getElementById('filtroRegistroData')?.value || '').trim()
+  const tipo = (document.getElementById('filtroRegistroTipo')?.value || '').trim()
+  const filtrados = adminRegistrosCache.filter(r => {
+    const okUsuario = !usuario || String(r.usuario || '').toLowerCase().includes(usuario)
+    const okData = !data || String(r.data || '').slice(0,10) === data
+    const okTipo = !tipo || r.tipo === tipo
+    return okUsuario && okData && okTipo
+  })
+  renderRegistrosAdmin(filtrados)
+}
+
+window.limparFiltrosRegistros = function(){
+  const usuario = document.getElementById('filtroRegistroUsuario')
+  const data = document.getElementById('filtroRegistroData')
+  const tipo = document.getElementById('filtroRegistroTipo')
+  if(usuario) usuario.value = ''
+  if(data) data.value = ''
+  if(tipo) tipo.value = ''
+  renderRegistrosAdmin(adminRegistrosCache)
+}
+
+window.fecharMesPorFuncionario = async function(){
+  const user = requireAdmin()
+  const mes = document.getElementById('mesFechamento').value
+  const funcionario = document.getElementById('funcionarioFechamento').value
+  if(!mes){ showMsg('fechMsg','Selecione um mês.', false, 'warning'); return }
+  if(!funcionario){ showMsg('fechMsg','Selecione um funcionário para o fechamento individual.', false, 'warning'); return }
+
+  const payload = { mes_ref: mes, fechado_por: user.usuario, fechado_em: brasiliaNowISO(), usuario_ref: funcionario }
+  const { error } = await supabase.from('fechamentos').insert(payload)
+  showMsg('fechMsg', error ? 'Erro ao fechar mês para este funcionário. Talvez já esteja fechado.' : `Fechamento realizado para ${funcionario}.`, false, error ? 'danger' : 'success')
+  if(!error) await carregarResumoGeral()
+}
 
 window.gerarIdsFaltantes = async function(){
   requireAdmin()
@@ -397,18 +499,11 @@ window.criarUsuario = async function(){
 }
 window.carregarUsuarios = async function(){
   requireAdmin()
-  const tbody = document.getElementById('tabelaUsuarios')
-  if(!tbody) return
   const { data } = await supabase.from('usuarios').select('*').order('usuario', { ascending: true })
   const users = data || []
-  tbody.innerHTML = users.length ? users.map(u => `
-    <tr>
-      <td>${u.funcionario_id || '-'}</td>
-      <td><input id="usuario_${u.id}" value="${u.usuario ?? ''}"></td>
-      <td><input id="senha_${u.id}" value="${u.senha ?? ''}"></td>
-      <td><select id="role_${u.id}"><option value="funcionario" ${u.role === 'funcionario' ? 'selected' : ''}>Funcionário</option><option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Admin</option></select></td>
-      <td><div class="toolbar"><button onclick="salvarUsuario('${u.id}')" style="width:auto">Salvar</button><button class="danger" onclick="excluirUsuario('${u.id}')" style="width:auto">Excluir</button></div></td>
-    </tr>`).join('') : '<tr><td colspan="5">Nenhum usuário.</td></tr>'
+  adminUsuariosCache = users
+  preencherSelectFuncionariosFechamento(users)
+  renderUsuariosAdmin(users)
 }
 window.salvarUsuario = async function(id){
   requireAdmin()
@@ -437,26 +532,10 @@ window.excluirUsuario = async function(id){
 }
 window.carregarRegistrosAdmin = async function(){
   requireAdmin()
-  const tbody = document.getElementById('tabelaRegistrosAdmin')
-  if(!tbody) return
-  const { data } = await supabase.from('registros').select('*').order('data', { ascending: false }).limit(120)
+  const { data } = await supabase.from('registros').select('*').order('data', { ascending: false }).limit(500)
   const regs = data || []
-  atualizarBotoesPonto(regs)
-  tbody.innerHTML = regs.length ? regs.map(r => `
-    <tr>
-      <td><input id="r_usuario_${r.id}" value="${r.usuario ?? ''}"></td>
-      <td><input id="r_data_${r.id}" value="${r.data ?? ''}"></td>
-      <td>
-        <select id="r_tipo_${r.id}">
-          <option value="Entrada" ${r.tipo === 'Entrada' ? 'selected' : ''}>Entrada</option>
-          <option value="Saída Almoço" ${r.tipo === 'Saída Almoço' ? 'selected' : ''}>Saída Almoço</option>
-          <option value="Volta Almoço" ${r.tipo === 'Volta Almoço' ? 'selected' : ''}>Volta Almoço</option>
-          <option value="Saída" ${r.tipo === 'Saída' ? 'selected' : ''}>Saída</option>
-        </select>
-      </td>
-      <td><input id="r_obs_${r.id}" value="${r.observacao ?? ''}"></td>
-      <td><div class="toolbar"><button onclick="salvarRegistro('${r.id}')" style="width:auto">Salvar</button><button class="danger" onclick="excluirRegistro('${r.id}')" style="width:auto">Excluir</button></div></td>
-    </tr>`).join('') : '<tr><td colspan="5">Nenhum registro.</td></tr>'
+  adminRegistrosCache = regs
+  renderRegistrosAdmin(regs)
 }
 window.salvarRegistro = async function(id){
   requireAdmin()
@@ -527,60 +606,99 @@ window.exportarExcelDia = async function(){
 }
 window.exportarExcel = async function(){
   requireAdmin()
-  const { data: registros } = await supabase.from('registros').select('*').order('data', { ascending: true })
-  const rows = registros || []
-  const abaRegistros = rows.map(r => ({
-    'Usuário': r.usuario,
-    'Tipo': r.tipo,
-    'Data': formatDateBR(r.data),
-    'Hora': formatTimeBR(r.data),
-    'Latitude': r.latitude || '',
-    'Longitude': r.longitude || '',
-    'Observação': r.observacao || ''
-  }))
-  const agrupado = {}
-  for (const r of rows) {
-    const dataBr = formatDateBR(r.data)
-    const chave = `${r.usuario}__${dataBr}`
-    if (!agrupado[chave]) agrupado[chave] = { usuario: r.usuario, data: dataBr, entrada:'', saidaAlmoco:'', voltaAlmoco:'', saida:'', entradaISO:null, saidaAlmocoISO:null, voltaAlmocoISO:null, saidaISO:null }
-    const hora = formatTimeBR(r.data)
-    if (r.tipo === 'Entrada' && !agrupado[chave].entrada) { agrupado[chave].entrada = hora; agrupado[chave].entradaISO = r.data }
-    if (r.tipo === 'Saída Almoço' && !agrupado[chave].saidaAlmoco) { agrupado[chave].saidaAlmoco = hora; agrupado[chave].saidaAlmocoISO = r.data }
-    if (r.tipo === 'Volta Almoço' && !agrupado[chave].voltaAlmoco) { agrupado[chave].voltaAlmoco = hora; agrupado[chave].voltaAlmocoISO = r.data }
-    if (r.tipo === 'Saída') { agrupado[chave].saida = hora; agrupado[chave].saidaISO = r.data }
-  }
+  const mesSelecionado = document.getElementById('mesFechamento')?.value || ''
+  const funcionario = document.getElementById('funcionarioFechamento')?.value || ''
+  const { data: registros } = await supabase.from('registros').select('*').order('usuario', { ascending: true }).order('data', { ascending: true })
+  let rows = registros || []
+
+  if(funcionario) rows = rows.filter(r => r.usuario === funcionario)
+  if(mesSelecionado) rows = rows.filter(r => String(r.data).slice(0,7) === mesSelecionado)
+
   const { data: cfg } = await supabase.from('configuracoes').select('*').limit(1).maybeSingle()
   const jornadaPadrao = Number(cfg?.jornada_horas || 8)
-  const resumoDiario = Object.values(agrupado).map(item => {
-    let workedHours = 0
-    if(item.entradaISO && item.saidaISO) workedHours = (new Date(item.saidaISO) - new Date(item.entradaISO)) / 1000 / 60 / 60
-    if(item.saidaAlmocoISO && item.voltaAlmocoISO) workedHours -= (new Date(item.voltaAlmocoISO) - new Date(item.saidaAlmocoISO)) / 1000 / 60 / 60
-    workedHours = Math.max(0, workedHours)
-    const extras = Math.max(0, workedHours - jornadaPadrao)
-    const faltantes = Math.max(0, jornadaPadrao - workedHours)
-    return { 'Usuário': item.usuario, 'Data': item.data, 'Primeira Entrada': item.entrada, 'Saída Almoço': item.saidaAlmoco, 'Volta Almoço': item.voltaAlmoco, 'Saída Final': item.saida, 'Horas Trabalhadas': horasToHM(workedHours), 'Horas Extras': horasToHM(extras), 'Horas Faltantes': horasToHM(faltantes) }
-  })
-  const mensalMap = {}
-  for (const linha of resumoDiario) {
-    const [dia, mes, ano] = linha['Data'].split('/')
-    const chave = `${linha['Usuário']}__${mes}/${ano}`
-    if (!mensalMap[chave]) mensalMap[chave] = { usuario: linha['Usuário'], mes: `${mes}/${ano}`, dias: 0, worked: 0, extras: 0, faltantes: 0 }
-    const parseHM = (txt) => { const [h,m] = (txt || '00:00').split(':').map(Number); return (h||0) + ((m||0)/60) }
-    mensalMap[chave].dias += 1
-    mensalMap[chave].worked += parseHM(linha['Horas Trabalhadas'])
-    mensalMap[chave].extras += parseHM(linha['Horas Extras'])
-    mensalMap[chave].faltantes += parseHM(linha['Horas Faltantes'])
+
+  const agrupadoUsuarios = {}
+  for (const r of rows) {
+    if(!agrupadoUsuarios[r.usuario]) agrupadoUsuarios[r.usuario] = []
+    agrupadoUsuarios[r.usuario].push(r)
   }
-  const resumoMensal = Object.values(mensalMap).map(item => ({ 'Usuário': item.usuario, 'Mês': item.mes, 'Dias Trabalhados': item.dias, 'Total Horas': horasToHM(item.worked), 'Total Extras': horasToHM(item.extras), 'Total Faltantes': horasToHM(item.faltantes) }))
-  const wb = XLSX.utils.book_new(), ws1 = XLSX.utils.json_to_sheet(abaRegistros), ws2 = XLSX.utils.json_to_sheet(resumoDiario), ws3 = XLSX.utils.json_to_sheet(resumoMensal)
-  ws1['!autofilter'] = { ref: 'A1:G1' }; ws2['!autofilter'] = { ref: 'A1:I1' }; ws3['!autofilter'] = { ref: 'A1:F1' }
-  ws1['!cols'] = [{wch:18},{wch:18},{wch:12},{wch:12},{wch:14},{wch:14},{wch:28}]
-  ws2['!cols'] = [{wch:18},{wch:12},{wch:16},{wch:16},{wch:16},{wch:14},{wch:18},{wch:16},{wch:18}]
-  ws3['!cols'] = [{wch:18},{wch:10},{wch:18},{wch:14},{wch:14},{wch:16}]
-  XLSX.utils.book_append_sheet(wb, ws1, 'Registros')
-  XLSX.utils.book_append_sheet(wb, ws2, 'Resumo Diário')
-  XLSX.utils.book_append_sheet(wb, ws3, 'Resumo Mensal')
-  XLSX.writeFile(wb, `Ponto_InnoLife_${brasiliaTodayKey().slice(5,7)}_${brasiliaTodayKey().slice(0,4)}.xlsx`)
+
+  const wb = XLSX.utils.book_new()
+  const nomesUsuarios = Object.keys(agrupadoUsuarios).sort((a,b) => a.localeCompare(b, 'pt-BR'))
+
+  if(!nomesUsuarios.length){
+    const ws = XLSX.utils.json_to_sheet([{ Mensagem: 'Nenhum registro encontrado para os filtros selecionados.' }])
+    XLSX.utils.book_append_sheet(wb, ws, 'Resumo')
+    XLSX.writeFile(wb, `Ponto_InnoLife_${mesSelecionado || 'geral'}.xlsx`)
+    return
+  }
+
+  const resumoGeral = []
+  const somaHM = (txt) => {
+    const [h,m] = String(txt || '00:00').split(':').map(Number)
+    return (h || 0) + ((m || 0)/60)
+  }
+
+  for (const usuario of nomesUsuarios) {
+    const lista = agrupadoUsuarios[usuario]
+    const agrupadoDia = {}
+
+    for (const r of lista) {
+      const dataBr = formatDateBR(r.data)
+      const chave = `${r.usuario}__${dataBr}`
+      if (!agrupadoDia[chave]) agrupadoDia[chave] = {
+        usuario: r.usuario, data: dataBr,
+        entrada:'', saidaAlmoco:'', voltaAlmoco:'', saida:'',
+        entradaISO:null, saidaAlmocoISO:null, voltaAlmocoISO:null, saidaISO:null
+      }
+      const hora = formatTimeBR(r.data)
+      if (r.tipo === 'Entrada' && !agrupadoDia[chave].entrada) { agrupadoDia[chave].entrada = hora; agrupadoDia[chave].entradaISO = r.data }
+      if (r.tipo === 'Saída Almoço' && !agrupadoDia[chave].saidaAlmoco) { agrupadoDia[chave].saidaAlmoco = hora; agrupadoDia[chave].saidaAlmocoISO = r.data }
+      if (r.tipo === 'Volta Almoço' && !agrupadoDia[chave].voltaAlmoco) { agrupadoDia[chave].voltaAlmoco = hora; agrupadoDia[chave].voltaAlmocoISO = r.data }
+      if (r.tipo === 'Saída') { agrupadoDia[chave].saida = hora; agrupadoDia[chave].saidaISO = r.data }
+    }
+
+    const resumoDiario = Object.values(agrupadoDia).map(item => {
+      let workedHours = 0
+      if(item.entradaISO && item.saidaISO) workedHours = (new Date(item.saidaISO) - new Date(item.entradaISO)) / 1000 / 60 / 60
+      if(item.saidaAlmocoISO && item.voltaAlmocoISO) workedHours -= (new Date(item.voltaAlmocoISO) - new Date(item.saidaAlmocoISO)) / 1000 / 60 / 60
+      workedHours = Math.max(0, workedHours)
+      const extras = Math.max(0, workedHours - jornadaPadrao)
+      const faltantes = Math.max(0, jornadaPadrao - workedHours)
+      return {
+        'Usuário': item.usuario,
+        'Data': item.data,
+        'Primeira Entrada': item.entrada,
+        'Saída Almoço': item.saidaAlmoco,
+        'Volta Almoço': item.voltaAlmoco,
+        'Saída Final': item.saida,
+        'Horas Trabalhadas': horasToHM(workedHours),
+        'Horas Extras': horasToHM(extras),
+        'Horas Faltantes': horasToHM(faltantes)
+      }
+    })
+
+    resumoGeral.push({
+      'Usuário': usuario,
+      'Dias Trabalhados': resumoDiario.length,
+      'Total Horas': horasToHM(resumoDiario.reduce((acc, item) => acc + somaHM(item['Horas Trabalhadas']), 0)),
+      'Total Extras': horasToHM(resumoDiario.reduce((acc, item) => acc + somaHM(item['Horas Extras']), 0)),
+      'Total Faltantes': horasToHM(resumoDiario.reduce((acc, item) => acc + somaHM(item['Horas Faltantes']), 0))
+    })
+
+    const nomeAba = (usuario || 'Funcionario').substring(0, 28)
+    const ws = XLSX.utils.json_to_sheet(resumoDiario)
+    ws['!autofilter'] = { ref: 'A1:I1' }
+    ws['!cols'] = [{wch:18},{wch:12},{wch:16},{wch:16},{wch:16},{wch:14},{wch:18},{wch:16},{wch:18}]
+    XLSX.utils.book_append_sheet(wb, ws, nomeAba)
+  }
+
+  const wsResumo = XLSX.utils.json_to_sheet(resumoGeral)
+  wsResumo['!autofilter'] = { ref: 'A1:E1' }
+  wsResumo['!cols'] = [{wch:22},{wch:18},{wch:14},{wch:14},{wch:16}]
+  XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo Geral')
+
+  XLSX.writeFile(wb, `Ponto_InnoLife_${mesSelecionado || 'geral'}${funcionario ? '_' + funcionario : ''}.xlsx`)
 }
 
 
