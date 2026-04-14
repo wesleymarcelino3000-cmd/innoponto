@@ -1,0 +1,3 @@
+-- EXECUTE NO SUPABASE
+create unique index unico_ponto_por_dia
+on registros (usuario, tipo, (date(data)));
