@@ -1,0 +1,6 @@
+Pacote com painel admin visual mais profissional.
+- topo melhorado
+- cards KPI premium
+- seções com aparência empresarial
+- tabela mais elegante
+- sem alterar a lógica principal do sistema

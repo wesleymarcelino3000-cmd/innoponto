@@ -1,0 +1,18 @@
+ATUALIZAÇÃO NÍVEL EXTREMO
+
+1) Suba TODOS os arquivos deste ZIP no seu servidor.
+2) Sempre que fizer nova atualização:
+   - troque APP_VERSION no app.js para o próximo número
+   - troque ?v=4 nos HTMLs para o próximo número
+   - troque a versão no sw.js para o próximo número
+
+Exemplo da próxima versão:
+- app.js -> APP_VERSION = "5"
+- index.html/painel.html/admin.html -> app.js?v=5
+- sw.js -> CACHE_NAME ponto-innolife-v5 e referências __VERSION__ para 5
+
+O que este pacote faz:
+- atualiza em background
+- troca para a nova versão sozinho
+- limpa cache antigo
+- não cacheia chamadas do Supabase

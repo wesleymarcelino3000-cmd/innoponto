@@ -1,0 +1,21 @@
+VERSÃO DEFINITIVA
+
+Esta versão junta:
+- atualização automática para Android e iPhone
+- service worker com limpeza de cache
+- visual profissional no admin
+- bloqueio de ponto duplicado por tipo no dia
+- ordem obrigatória dos pontos
+- botões inteligentes no painel
+
+PARA PUBLICAR:
+1) Extraia e suba todos os arquivos no seu servidor.
+2) Execute o SQL do arquivo IMPORTANTE_SQL.txt no Supabase.
+
+NAS PRÓXIMAS ATUALIZAÇÕES:
+- app.js -> APP_VERSION = "8"
+- index.html / painel.html / admin.html -> app.js?v=8
+- sw.js -> CACHE_NAME ponto-innolife-v8 e referências v=8
+
+Observação:
+No iPhone a atualização costuma aparecer ao reabrir o app, porque o iOS trata cache de PWA de forma mais restrita.
