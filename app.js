@@ -1,4 +1,35 @@
 
+const APP_VERSION = "6"
+
+function isIOS(){
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent)
+}
+
+function isAndroid(){
+  return /Android/i.test(navigator.userAgent)
+}
+
+function atualizarPorDispositivo(){
+  const v = localStorage.getItem("app_version")
+
+  if(v !== APP_VERSION){
+    localStorage.setItem("app_version", APP_VERSION)
+
+    if(isIOS()){
+      // iPhone precisa forçar mais
+      setTimeout(() => {
+        location.reload()
+      }, 1500)
+    }
+
+    if(isAndroid()){
+      // Android atualiza mais suave
+      location.reload()
+    }
+  }
+}
+
+
 import { SUPABASE_URL, SUPABASE_KEY, LOCAL_EMPRESA, LIMITE_METROS, TIMEZONE } from './config.js'
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY)
@@ -132,14 +163,7 @@ window.registrarPonto = async function(tipo){
       observacao: obs
     }
     const { error } = await supabase.from('registros').insert(payload)
-    if(error){
-      if(String(error.message).toLowerCase().includes('duplicate') || String(error.message).toLowerCase().includes('unique')){
-        showMsg('status','Você já registrou esse tipo de ponto hoje.', false, 'warning')
-      } else {
-        showMsg('status','Erro ao registrar ponto.', false, 'danger')
-      }
-      return
-    }
+    if(error){ showMsg('status','Erro ao registrar ponto.', false, 'danger'); return }
     const obsEl = document.getElementById('obs'); if(obsEl) obsEl.value = ''
     showMsg('status', `Ponto registrado com horário de Brasília. Distância: ${Math.round(distancia)}m.`, false, 'success')
     animacaoPremiumPonto(tipo, `${tipo} registrada com sucesso.`)
@@ -413,7 +437,8 @@ window.exportarExcel = async function(){
   XLSX.writeFile(wb, `Ponto_InnoLife_${brasiliaTodayKey().slice(5,7)}_${brasiliaTodayKey().slice(0,4)}.xlsx`)
 }
 
-async function boot(){
+async function atualizarPorDispositivo()
+boot(){
   const path = location.pathname.split('/').pop()
   if(path === 'painel.html'){
     const user = requireLogin()
@@ -441,4 +466,5 @@ async function boot(){
     await carregarRegistrosAdmin()
   }
 }
+atualizarPorDispositivo()
 boot()
