@@ -190,6 +190,7 @@ async function carregarRegistrosDoDia(){
   const tbody = document.getElementById('tabelaRegistros')
   if(!tbody) return
   const regs = await buscarMeusRegistrosHoje()
+  atualizarBotoesPonto(regs)
   tbody.innerHTML = regs.length ? regs.sort((a,b)=>new Date(b.data)-new Date(a.data)).map(r => `<tr><td>${formatDateTime(r.data)}</td><td>${r.tipo}</td><td>${r.observacao || '-'}</td><td>${r.latitude || '-'}</td><td>${r.longitude || '-'}</td></tr>`).join('') : '<tr><td colspan="5">Nenhum ponto registrado hoje.</td></tr>'
 }
 
@@ -288,6 +289,7 @@ window.carregarRegistrosAdmin = async function(){
   if(!tbody) return
   const { data } = await supabase.from('registros').select('*').order('data', { ascending: false }).limit(120)
   const regs = data || []
+  atualizarBotoesPonto(regs)
   tbody.innerHTML = regs.length ? regs.map(r => `
     <tr>
       <td><input id="r_usuario_${r.id}" value="${r.usuario ?? ''}"></td>
@@ -321,6 +323,35 @@ window.excluirRegistro = async function(id){
   const { error } = await supabase.from('registros').delete().eq('id', id)
   showMsg('recordMsg', error ? 'Erro ao excluir ponto.' : 'Ponto excluído com sucesso.', false, error ? 'danger' : 'success')
   if(!error) await carregarRegistrosAdmin()
+}
+
+
+function atualizarBotoesPonto(registros){
+  const tipos = registros.map(r => r.tipo)
+  const temEntrada = tipos.includes('Entrada')
+  const temSaidaAlmoco = tipos.includes('Saída Almoço')
+  const temVoltaAlmoco = tipos.includes('Volta Almoço')
+  const temSaida = tipos.includes('Saída')
+
+  const btns = {
+    'Entrada': document.querySelector("button[onclick=\"registrarPonto('Entrada')\"]"),
+    'Saída Almoço': document.querySelector("button[onclick=\"registrarPonto('Saída Almoço')\"]"),
+    'Volta Almoço': document.querySelector("button[onclick=\"registrarPonto('Volta Almoço')\"]"),
+    'Saída': document.querySelector("button[onclick=\"registrarPonto('Saída')\"]")
+  }
+
+  Object.values(btns).forEach(b => { if(b) b.disabled = false })
+
+  if(temEntrada) btns['Entrada'] && (btns['Entrada'].disabled = true)
+
+  if(!temEntrada || temSaidaAlmoco || temVoltaAlmoco || temSaida)
+    btns['Saída Almoço'] && (btns['Saída Almoço'].disabled = true)
+
+  if(!temSaidaAlmoco || temVoltaAlmoco || temSaida)
+    btns['Volta Almoço'] && (btns['Volta Almoço'].disabled = true)
+
+  if(!temEntrada || temSaida || (temSaidaAlmoco && !temVoltaAlmoco))
+    btns['Saída'] && (btns['Saída'].disabled = true)
 }
 
 function buildWorkbookFromRows(rows){
