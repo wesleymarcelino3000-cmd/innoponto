@@ -1,31 +1,11 @@
 
-const APP_VERSION = "6"
+const APP_VERSION = "5"
 
-function isIOS(){
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent)
-}
-
-function isAndroid(){
-  return /Android/i.test(navigator.userAgent)
-}
-
-function atualizarPorDispositivo(){
+function atualizarUniversal(){
   const v = localStorage.getItem("app_version")
-
   if(v !== APP_VERSION){
     localStorage.setItem("app_version", APP_VERSION)
-
-    if(isIOS()){
-      // iPhone precisa forçar mais
-      setTimeout(() => {
-        location.reload()
-      }, 1500)
-    }
-
-    if(isAndroid()){
-      // Android atualiza mais suave
-      location.reload()
-    }
+    location.reload()
   }
 }
 
@@ -437,7 +417,7 @@ window.exportarExcel = async function(){
   XLSX.writeFile(wb, `Ponto_InnoLife_${brasiliaTodayKey().slice(5,7)}_${brasiliaTodayKey().slice(0,4)}.xlsx`)
 }
 
-async function atualizarPorDispositivo()
+async function atualizarUniversal()
 boot(){
   const path = location.pathname.split('/').pop()
   if(path === 'painel.html'){
@@ -466,5 +446,5 @@ boot(){
     await carregarRegistrosAdmin()
   }
 }
-atualizarPorDispositivo()
+atualizarUniversal()
 boot()
