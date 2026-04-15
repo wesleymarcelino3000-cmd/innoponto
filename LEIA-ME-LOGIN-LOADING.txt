@@ -1,0 +1,5 @@
+Versão 7.5
+- adicionada animação de carregamento no login
+- botão Entrar muda para Entrando...
+- overlay com spinner enquanto valida o login
+- bloqueio de clique duplo

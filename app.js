@@ -1,5 +1,5 @@
 
-const APP_VERSION = "7.4"
+const APP_VERSION = "7.5"
 
 function isIOS(){
   return /iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -72,6 +72,18 @@ function getUser(){ try { return JSON.parse(localStorage.getItem('ponto_user') |
 function setUser(u){ localStorage.setItem('ponto_user', JSON.stringify(u)) }
 function logout(){ localStorage.removeItem('ponto_user'); location.href='index.html' }
 window.logout = logout
+
+function toggleLoginLoading(show=true){
+  const overlay = document.getElementById('loginLoading')
+  const btn = document.querySelector('button[onclick="login()"]')
+  if(overlay) overlay.classList.toggle('hidden', !show)
+  if(btn){
+    btn.disabled = show
+    btn.classList.toggle('is-loading', show)
+    btn.textContent = show ? 'Entrando...' : 'Entrar'
+  }
+}
+
 function requireLogin(){ const u = getUser(); if(!u) location.href='index.html'; return u }
 function requireAdmin(){ const u = requireLogin(); if(u?.role !== 'admin') location.href='painel.html'; return u }
 window.irAdmin = function(){ const u=getUser(); if(u?.role==='admin') location.href='admin.html'; else alert('Somente admin pode acessar.') }
@@ -159,10 +171,28 @@ function atualizarStatusArea(distancia){
 window.login = async function(){
   const usuario = document.getElementById('user').value.trim()
   const senha = document.getElementById('pass').value.trim()
-  const { data, error } = await supabase.from('usuarios').select('*').eq('usuario', usuario).eq('senha', senha).maybeSingle()
-  if(error || !data){ showMsg('msg','Usuário ou senha inválidos.', false, 'danger'); return }
-  setUser(data)
-  location.href = 'painel.html'
+  if(!usuario || !senha){
+    showMsg('msg','Preencha usuário e senha.', false, 'warning')
+    return
+  }
+
+  toggleLoginLoading(true)
+  try{
+    const { data, error } = await supabase.from('usuarios').select('*').eq('usuario', usuario).eq('senha', senha).maybeSingle()
+    if(error || !data){
+      toggleLoginLoading(false)
+      showMsg('msg','Usuário ou senha inválidos.', false, 'danger')
+      return
+    }
+
+    setUser(data)
+    setTimeout(() => {
+      location.href = 'painel.html'
+    }, 450)
+  }catch(e){
+    toggleLoginLoading(false)
+    showMsg('msg','Erro ao fazer login.', false, 'danger')
+  }
 }
 
 window.registrarPonto = async function(tipo){
