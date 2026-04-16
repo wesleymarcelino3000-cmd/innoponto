@@ -70,6 +70,43 @@
     </div>
   </div>
 
+
+  <div class="glass card section-card" style="margin-top:16px">
+    <div class="section-head"><div><p class="section-tag">Ajuste manual</p><h3>Lançar ponto para funcionário</h3></div><span class="section-chip">Esquecimento</span></div>
+    <div class="row">
+      <div>
+        <label>Funcionário</label>
+        <select id="manualPontoUsuario">
+          <option value="">Selecione um funcionário</option>
+        </select>
+      </div>
+      <div>
+        <label>Tipo</label>
+        <select id="manualPontoTipo">
+          <option value="Entrada">Entrada</option>
+          <option value="Saída Almoço">Saída Almoço</option>
+          <option value="Volta Almoço">Volta Almoço</option>
+          <option value="Saída">Saída</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div>
+        <label>Data e hora</label>
+        <input id="manualPontoData" type="datetime-local">
+      </div>
+      <div>
+        <label>Observação</label>
+        <input id="manualPontoObs" placeholder="Ex: ajuste por esquecimento do funcionário">
+      </div>
+    </div>
+    <div class="toolbar" style="margin-top:12px">
+      <button class="success" onclick="lancarPontoManual()">Lançar ponto manual</button>
+    </div>
+    <div id="manualPontoMsg" class="notice hidden" style="margin-top:12px"></div>
+  </div>
+
+
   <div class="glass card section-card" style="margin-top:16px">
     <div class="section-head"><div><p class="section-tag">Cadastro</p><h3>Criar usuário</h3></div><span class="section-chip">Novo</span></div>
     <div class="row">
@@ -142,6 +179,6 @@
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script type="module" src="app.js?v=7.5"></script>
+<script type="module" src="app.js?v=7.6"></script>
 </body>
 </html>

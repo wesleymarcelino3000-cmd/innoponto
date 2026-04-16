@@ -339,3 +339,9 @@ button.is-loading{
   opacity:.85;
   pointer-events:none;
 }
+
+
+/* manual point admin */
+#manualPontoObs{
+  max-width:100%;
+}

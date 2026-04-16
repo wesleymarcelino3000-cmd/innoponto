@@ -1,5 +1,5 @@
 
-const APP_VERSION = "7.5"
+const APP_VERSION = "7.6"
 
 function isIOS(){
   return /iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -371,6 +371,106 @@ window.carregarResumoGeral = async function(){
 }
 function gerarIdFuncionario(){ return 'FUNC-' + Date.now().toString().slice(-6) + Math.floor(Math.random()*90 + 10) }
 
+function preencherSelectPontoManual(usuarios){
+  const select = document.getElementById('manualPontoUsuario')
+  if(!select) return
+  const atual = select.value
+  const lista = (usuarios || []).filter(u => u.role === 'funcionario' || u.role === 'admin')
+  select.innerHTML = '<option value="">Selecione um funcionário</option>' + lista.map(u => `<option value="${u.usuario}">${u.usuario}${u.funcionario_id ? ` (${u.funcionario_id})` : ''}</option>`).join('')
+  if(atual) select.value = atual
+}
+
+function datetimeLocalToISOBr(dtLocal){
+  if(!dtLocal) return ''
+  return `${dtLocal}:00-03:00`
+}
+
+window.lancarPontoManual = async function(){
+  const adminUser = requireAdmin()
+  const usuario = (document.getElementById('manualPontoUsuario')?.value || '').trim()
+  const tipo = (document.getElementById('manualPontoTipo')?.value || '').trim()
+  const dataLocal = (document.getElementById('manualPontoData')?.value || '').trim()
+  const observacaoBase = (document.getElementById('manualPontoObs')?.value || '').trim()
+
+  if(!usuario || !tipo || !dataLocal){
+    showMsg('manualPontoMsg', 'Selecione funcionário, tipo e data/hora.', false, 'warning')
+    return
+  }
+
+  const dataISO = datetimeLocalToISOBr(dataLocal)
+  const diaRef = dataISO.slice(0,10)
+  const mesRef = dataISO.slice(0,7)
+
+  const { data: fechamentoMes } = await supabase.from('fechamentos').select('*').eq('mes_ref', mesRef).or(`usuario_ref.is.null,usuario_ref.eq.${usuario}`).limit(1)
+  if((fechamentoMes || []).length){
+    showMsg('manualPontoMsg', 'Este mês já está fechado para este funcionário.', false, 'danger')
+    return
+  }
+
+  const { data: registrosDia } = await supabase.from('registros').select('*').eq('usuario', usuario).order('data', { ascending: true })
+  const doDia = (registrosDia || []).filter(r => String(r.data).slice(0,10) === diaRef)
+
+  if(doDia.some(r => r.tipo === tipo)){
+    showMsg('manualPontoMsg', `Já existe ${tipo.toLowerCase()} para ${usuario} nesta data.`, false, 'warning')
+    return
+  }
+
+  const tiposHoje = doDia.map(r => r.tipo)
+  const temEntrada = tiposHoje.includes('Entrada')
+  const temSaidaAlmoco = tiposHoje.includes('Saída Almoço')
+  const temVoltaAlmoco = tiposHoje.includes('Volta Almoço')
+  const temSaida = tiposHoje.includes('Saída')
+
+  if(tipo === 'Saída Almoço'){
+    if(!temEntrada || temVoltaAlmoco || temSaida){
+      showMsg('manualPontoMsg', 'Ordem inválida: Saída almoço exige Entrada anterior e sem Saída final/Volta almoço já registrada.', false, 'warning')
+      return
+    }
+  }
+  if(tipo === 'Volta Almoço'){
+    if(!temEntrada || !temSaidaAlmoco || temSaida){
+      showMsg('manualPontoMsg', 'Ordem inválida: Volta almoço exige Entrada e Saída almoço anteriores.', false, 'warning')
+      return
+    }
+  }
+  if(tipo === 'Saída'){
+    if(!temEntrada || (temSaidaAlmoco && !temVoltaAlmoco)){
+      showMsg('manualPontoMsg', 'Ordem inválida: Saída exige Entrada e, se houver almoço, Volta almoço.', false, 'warning')
+      return
+    }
+  }
+
+  const observacao = observacaoBase
+    ? `${observacaoBase} | Lançado manualmente por ${adminUser.usuario}`
+    : `Lançado manualmente por ${adminUser.usuario}`
+
+  const payload = {
+    usuario,
+    tipo,
+    data: dataISO,
+    latitude: '',
+    longitude: '',
+    observacao
+  }
+
+  const { error } = await supabase.from('registros').insert(payload)
+  if(error){
+    if(String(error.message).toLowerCase().includes('duplicate') || String(error.message).toLowerCase().includes('unique')){
+      showMsg('manualPontoMsg', 'Já existe esse tipo de ponto nesta data para este funcionário.', false, 'warning')
+    } else {
+      showMsg('manualPontoMsg', 'Erro ao lançar ponto manual.', false, 'danger')
+    }
+    return
+  }
+
+  showMsg('manualPontoMsg', 'Ponto manual lançado com sucesso.', false, 'success')
+  const obsEl = document.getElementById('manualPontoObs')
+  if(obsEl) obsEl.value = ''
+  await carregarRegistrosAdmin()
+  await carregarResumoGeral()
+}
+
+
 function preencherSelectFuncionariosFechamento(usuarios){
   const select = document.getElementById('funcionarioFechamento')
   if(!select) return
@@ -537,6 +637,7 @@ window.carregarUsuarios = async function(){
   const users = data || []
   adminUsuariosCache = users
   preencherSelectFuncionariosFechamento(users)
+  preencherSelectPontoManual(users)
   renderUsuariosAdmin(users)
 }
 window.salvarUsuario = async function(id){
@@ -784,6 +885,12 @@ async function boot(){
     const { data: cfg } = await supabase.from('configuracoes').select('*').limit(1).maybeSingle()
     document.getElementById('jornadaHoras').value = cfg?.jornada_horas ?? 8
     document.getElementById('toleranciaMin').value = cfg?.tolerancia_min ?? 10
+    const manualData = document.getElementById('manualPontoData')
+    if(manualData && !manualData.value){
+      const now = new Date()
+      const pad = n => String(n).padStart(2,'0')
+      manualData.value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
+    }
     await carregarResumoGeral()
     await carregarUsuarios()
     await carregarRegistrosAdmin()

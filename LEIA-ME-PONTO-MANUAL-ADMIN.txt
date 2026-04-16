@@ -1,0 +1,6 @@
+Versão 7.6
+- admin pode lançar ponto manual para funcionário
+- escolha de funcionário, tipo, data/hora e observação
+- valida duplicidade no dia
+- respeita ordem dos pontos
+- bloqueia se mês estiver fechado para o funcionário
