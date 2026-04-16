@@ -1,5 +1,5 @@
 
-const APP_VERSION = "7.6"
+const APP_VERSION = "7.7"
 
 function isIOS(){
   return /iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -72,6 +72,76 @@ function getUser(){ try { return JSON.parse(localStorage.getItem('ponto_user') |
 function setUser(u){ localStorage.setItem('ponto_user', JSON.stringify(u)) }
 function logout(){ localStorage.removeItem('ponto_user'); location.href='index.html' }
 window.logout = logout
+
+function abrirComprovante(registro){
+  const user = getUser() || {}
+  const modal = document.getElementById('comprovanteModal')
+  if(!modal || !registro) return
+  document.getElementById('cpUsuario').textContent = registro.usuario || user.usuario || '-'
+  document.getElementById('cpId').textContent = user.funcionario_id || '-'
+  document.getElementById('cpTipo').textContent = registro.tipo || '-'
+  document.getElementById('cpData').textContent = formatDateBR(registro.data)
+  document.getElementById('cpHora').textContent = formatTimeBR(registro.data)
+  document.getElementById('cpObs').textContent = registro.observacao || '-'
+  document.getElementById('cpEmitido').textContent = `Emitido em ${formatDateTime(new Date().toISOString())}`
+  modal.classList.remove('hidden')
+}
+
+window.fecharComprovante = function(){
+  const modal = document.getElementById('comprovanteModal')
+  if(modal) modal.classList.add('hidden')
+}
+
+window.gerarComprovanteUltimoPonto = async function(){
+  const user = requireLogin()
+  const { data } = await supabase.from('registros').select('*').eq('usuario', user.usuario).order('data', { ascending: false }).limit(1)
+  const ultimo = (data || [])[0]
+  if(!ultimo){
+    alert('Nenhum ponto encontrado para gerar comprovante.')
+    return
+  }
+  abrirComprovante(ultimo)
+}
+
+window.baixarComprovantePDF = function(){
+  const area = document.getElementById('comprovantePrintArea')
+  if(!area){
+    alert('Comprovante não encontrado.')
+    return
+  }
+  const w = window.open('', '_blank')
+  if(!w){
+    alert('Permita pop-up para baixar o comprovante.')
+    return
+  }
+  const html = `
+    <html>
+      <head>
+        <title>Comprovante de ponto</title>
+        <meta charset="utf-8">
+        <style>
+          body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#0b1c38}
+          .card{border:1px solid #d7e3f7;border-radius:18px;padding:20px}
+          .head{display:flex;align-items:center;gap:16px;border-bottom:1px solid #e6eefb;padding-bottom:12px;margin-bottom:16px}
+          .head img{width:72px}
+          .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+          .grid div{border:1px solid #e6eefb;border-radius:12px;padding:12px}
+          strong{display:block;font-size:12px;color:#4c6188;margin-bottom:6px;text-transform:uppercase}
+          .foot{margin-top:16px;padding-top:12px;border-top:1px solid #e6eefb;font-size:12px;color:#4c6188}
+        </style>
+      </head>
+      <body>
+        ${area.innerHTML}
+        <script>
+          window.onload = function(){ window.print(); setTimeout(() => window.close(), 300); }
+        <\/script>
+      </body>
+    </html>`
+  w.document.open()
+  w.document.write(html)
+  w.document.close()
+}
+
 
 function toggleLoginLoading(show=true){
   const overlay = document.getElementById('loginLoading')
@@ -283,6 +353,7 @@ window.registrarPonto = async function(tipo){
     animacaoPremiumPonto(tipo, `${tipo} registrada com sucesso.`)
     await carregarRegistrosDoDia()
     await carregarResumoHoje()
+    abrirComprovante(payload)
   }, ()=> showMsg('status','Permita a localização para registrar o ponto.', false, 'warning'))
 }
 

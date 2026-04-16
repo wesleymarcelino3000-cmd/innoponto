@@ -60,6 +60,7 @@
     <div class="topbar">
       <h3>Pontos do dia</h3>
       <div class="toolbar">
+        <button id="btnComprovante" class="secondary" onclick="gerarComprovanteUltimoPonto()">Gerar comprovante</button>
         <button id="btnExportarDia" class="success hidden" onclick="exportarExcelDia()">Exportar Excel do dia</button>
       </div>
     </div>
@@ -71,7 +72,38 @@
     </div>
   </div>
 </div>
+
+<div id="comprovanteModal" class="comprovante-modal hidden">
+  <div class="comprovante-card">
+    <div id="comprovantePrintArea">
+      <div class="comprovante-head">
+        <img src="logo.webp" alt="Logo" class="comprovante-logo">
+        <div>
+          <h3>Comprovante de ponto</h3>
+          <p>Registro individual do funcionário</p>
+        </div>
+      </div>
+      <div class="comprovante-grid">
+        <div><strong>Funcionário</strong><span id="cpUsuario">-</span></div>
+        <div><strong>ID</strong><span id="cpId">-</span></div>
+        <div><strong>Tipo</strong><span id="cpTipo">-</span></div>
+        <div><strong>Data</strong><span id="cpData">-</span></div>
+        <div><strong>Hora</strong><span id="cpHora">-</span></div>
+        <div><strong>Observação</strong><span id="cpObs">-</span></div>
+      </div>
+      <div class="comprovante-foot">
+        <span>Sistema Ponto InnoLife</span>
+        <span id="cpEmitido">-</span>
+      </div>
+    </div>
+    <div class="toolbar" style="margin-top:14px;justify-content:flex-end">
+      <button class="secondary" onclick="fecharComprovante()">Fechar</button>
+      <button class="success" onclick="baixarComprovantePDF()">Baixar comprovante</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script type="module" src="app.js?v=7.6"></script>
+<script type="module" src="app.js?v=7.7"></script>
 </body>
 </html>

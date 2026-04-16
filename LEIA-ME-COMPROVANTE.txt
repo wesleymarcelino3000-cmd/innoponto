@@ -1,0 +1,5 @@
+Versão 7.7
+- funcionário pode gerar comprovante do último ponto
+- comprovante abre automaticamente após bater ponto
+- botão no painel para gerar comprovante novamente
+- opção de imprimir/baixar comprovante
