@@ -1,0 +1,4 @@
+Versão 7.8
+- comprovante pequeno em formato cupom
+- borda mais bonita e visual mais elegante
+- impressão otimizada para recibo pequeno

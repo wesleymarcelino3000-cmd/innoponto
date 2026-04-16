@@ -73,37 +73,38 @@
   </div>
 </div>
 
+
 <div id="comprovanteModal" class="comprovante-modal hidden">
-  <div class="comprovante-card">
-    <div id="comprovantePrintArea">
-      <div class="comprovante-head">
-        <img src="logo.webp" alt="Logo" class="comprovante-logo">
-        <div>
-          <h3>Comprovante de ponto</h3>
-          <p>Registro individual do funcionário</p>
-        </div>
+  <div class="comprovante-cupom-card">
+    <div id="comprovantePrintArea" class="comprovante-cupom">
+      <div class="cupom-topo">
+        <img src="logo.webp" alt="Logo" class="cupom-logo">
+        <div class="cupom-empresa">INNO LIFE</div>
+        <div class="cupom-titulo">Comprovante de Ponto</div>
       </div>
-      <div class="comprovante-grid">
-        <div><strong>Funcionário</strong><span id="cpUsuario">-</span></div>
-        <div><strong>ID</strong><span id="cpId">-</span></div>
-        <div><strong>Tipo</strong><span id="cpTipo">-</span></div>
-        <div><strong>Data</strong><span id="cpData">-</span></div>
-        <div><strong>Hora</strong><span id="cpHora">-</span></div>
-        <div><strong>Observação</strong><span id="cpObs">-</span></div>
-      </div>
-      <div class="comprovante-foot">
-        <span>Sistema Ponto InnoLife</span>
-        <span id="cpEmitido">-</span>
+
+      <div class="cupom-linha"><span>Funcionário</span><strong id="cpUsuario">-</strong></div>
+      <div class="cupom-linha"><span>ID</span><strong id="cpId">-</strong></div>
+      <div class="cupom-divisor"></div>
+      <div class="cupom-linha"><span>Tipo</span><strong id="cpTipo">-</strong></div>
+      <div class="cupom-linha"><span>Data</span><strong id="cpData">-</strong></div>
+      <div class="cupom-linha"><span>Hora</span><strong id="cpHora">-</strong></div>
+      <div class="cupom-linha cupom-obs"><span>Observação</span><strong id="cpObs">-</strong></div>
+      <div class="cupom-divisor"></div>
+      <div class="cupom-rodape">
+        <div id="cpEmitido">-</div>
+        <div>Sistema Ponto InnoLife</div>
       </div>
     </div>
-    <div class="toolbar" style="margin-top:14px;justify-content:flex-end">
+    <div class="toolbar cupom-acoes" style="margin-top:14px;justify-content:center">
       <button class="secondary" onclick="fecharComprovante()">Fechar</button>
-      <button class="success" onclick="baixarComprovantePDF()">Baixar comprovante</button>
+      <button class="success" onclick="baixarComprovantePDF()">Baixar cupom</button>
     </div>
   </div>
 </div>
 
+
 <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
-<script type="module" src="app.js?v=7.7"></script>
+<script type="module" src="app.js?v=7.8"></script>
 </body>
 </html>

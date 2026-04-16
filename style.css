@@ -348,7 +348,22 @@ button.is-loading{
 
 
 
-/* ===== COMPROVANTE ===== */
+@media (max-width:920px){
+  .comprovante-grid{
+    grid-template-columns:1fr;
+  }
+  .comprovante-head{
+    align-items:flex-start;
+    flex-direction:column;
+  }
+  .comprovante-foot{
+    flex-direction:column;
+  }
+}
+
+
+
+/* ===== COMPROVANTE CUPOM ===== */
 .comprovante-modal{
   position:fixed;
   inset:0;
@@ -361,70 +376,78 @@ button.is-loading{
   -webkit-backdrop-filter:blur(8px);
   padding:18px;
 }
-.comprovante-card{
-  width:min(92vw, 760px);
+.comprovante-cupom-card{
+  width:min(92vw, 360px);
   border-radius:26px;
-  padding:22px;
+  padding:18px;
   background:linear-gradient(180deg, rgba(15,34,67,.96), rgba(8,20,40,.94));
   border:1px solid rgba(132,181,255,.18);
   box-shadow:0 24px 60px rgba(0,0,0,.35);
 }
-.comprovante-head{
-  display:flex;
-  gap:16px;
-  align-items:center;
-  border-bottom:1px solid rgba(133,180,255,.14);
-  padding-bottom:14px;
-  margin-bottom:16px;
+.comprovante-cupom{
+  background:#ffffff;
+  color:#10213f;
+  border-radius:22px;
+  border:2px dashed #c9d9f4;
+  padding:18px 16px;
+  box-shadow:inset 0 0 0 1px #eef4ff;
 }
-.comprovante-logo{
-  width:74px;
-  max-width:74px;
+.cupom-topo{
+  text-align:center;
+  padding-bottom:12px;
 }
-.comprovante-grid{
-  display:grid;
-  grid-template-columns:repeat(2,1fr);
-  gap:14px;
+.cupom-logo{
+  width:64px;
+  max-width:64px;
+  display:block;
+  margin:0 auto 8px;
 }
-.comprovante-grid div{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-  padding:14px;
-  border-radius:18px;
-  background:rgba(8,18,36,.56);
-  border:1px solid rgba(133,180,255,.10);
+.cupom-empresa{
+  font-size:18px;
+  font-weight:900;
+  letter-spacing:.08em;
 }
-.comprovante-grid strong{
-  color:#a9bcdf;
-  font-size:12px;
-  text-transform:uppercase;
-  letter-spacing:.05em;
+.cupom-titulo{
+  font-size:13px;
+  color:#4c6188;
+  margin-top:4px;
 }
-.comprovante-grid span{
-  color:#eef5ff;
-  font-size:15px;
-  word-break:break-word;
+.cupom-divisor{
+  border-top:1px dashed #c9d9f4;
+  margin:12px 0;
 }
-.comprovante-foot{
+.cupom-linha{
   display:flex;
   justify-content:space-between;
-  gap:12px;
-  margin-top:16px;
-  padding-top:14px;
-  border-top:1px solid rgba(133,180,255,.14);
-  color:#a9bcdf;
-  font-size:13px;
+  gap:10px;
+  align-items:flex-start;
+  padding:6px 0;
 }
-@media (max-width:920px){
-  .comprovante-grid{
-    grid-template-columns:1fr;
-  }
-  .comprovante-head{
-    align-items:flex-start;
-    flex-direction:column;
-  }
-  .comprovante-foot{
-    flex-direction:column;
-  }
+.cupom-linha span{
+  color:#4c6188;
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+.cupom-linha strong{
+  color:#10213f;
+  font-size:14px;
+  text-align:right;
+  max-width:58%;
+}
+.cupom-obs{
+  flex-direction:column;
+}
+.cupom-obs strong{
+  max-width:100%;
+  text-align:left;
+}
+.cupom-rodape{
+  text-align:center;
+  color:#4c6188;
+  font-size:12px;
+  line-height:1.5;
+}
+.cupom-acoes button{
+  min-width:130px;
 }

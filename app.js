@@ -1,5 +1,5 @@
 
-const APP_VERSION = "7.7"
+const APP_VERSION = "7.8"
 
 function isIOS(){
   return /iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -117,21 +117,35 @@ window.baixarComprovantePDF = function(){
   const html = `
     <html>
       <head>
-        <title>Comprovante de ponto</title>
+        <title>Cupom de ponto</title>
         <meta charset="utf-8">
         <style>
-          body{font-family:Arial,Helvetica,sans-serif;padding:24px;color:#0b1c38}
-          .card{border:1px solid #d7e3f7;border-radius:18px;padding:20px}
-          .head{display:flex;align-items:center;gap:16px;border-bottom:1px solid #e6eefb;padding-bottom:12px;margin-bottom:16px}
-          .head img{width:72px}
-          .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-          .grid div{border:1px solid #e6eefb;border-radius:12px;padding:12px}
-          strong{display:block;font-size:12px;color:#4c6188;margin-bottom:6px;text-transform:uppercase}
-          .foot{margin-top:16px;padding-top:12px;border-top:1px solid #e6eefb;font-size:12px;color:#4c6188}
+          body{font-family:Arial,Helvetica,sans-serif;padding:20px;background:#ffffff;color:#10213f}
+          .comprovante-cupom{
+            width:300px;
+            margin:0 auto;
+            background:#ffffff;
+            color:#10213f;
+            border-radius:20px;
+            border:2px dashed #c9d9f4;
+            padding:18px 16px;
+            box-shadow:inset 0 0 0 1px #eef4ff;
+          }
+          .cupom-topo{text-align:center;padding-bottom:12px}
+          .cupom-logo{width:64px;max-width:64px;display:block;margin:0 auto 8px}
+          .cupom-empresa{font-size:18px;font-weight:900;letter-spacing:.08em}
+          .cupom-titulo{font-size:13px;color:#4c6188;margin-top:4px}
+          .cupom-divisor{border-top:1px dashed #c9d9f4;margin:12px 0}
+          .cupom-linha{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:6px 0}
+          .cupom-linha span{color:#4c6188;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+          .cupom-linha strong{color:#10213f;font-size:14px;text-align:right;max-width:58%}
+          .cupom-obs{display:block}
+          .cupom-obs strong{display:block;max-width:100%;text-align:left;margin-top:6px}
+          .cupom-rodape{text-align:center;color:#4c6188;font-size:12px;line-height:1.5}
         </style>
       </head>
       <body>
-        ${area.innerHTML}
+        ${area.outerHTML}
         <script>
           window.onload = function(){ window.print(); setTimeout(() => window.close(), 300); }
         <\/script>

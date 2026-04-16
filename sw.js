@@ -1,11 +1,11 @@
-const CACHE_NAME = 'ponto-innolife-v7-7';
+const CACHE_NAME = 'ponto-innolife-v7-8';
 const APP_SHELL = [
   './',
-  './index.html?v=7.7',
+  './index.html?v=7.8',
   './painel.html',
   './admin.html',
   './style.css',
-  './app.js?v=7.7',
+  './app.js?v=7.8',
   './manifest.json',
   './favicon.ico',
   './icon-192.png',
@@ -58,7 +58,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
           return res;
         })
-        .catch(() => caches.match(req).then(r => r || caches.match('./index.html?v=7.7')))
+        .catch(() => caches.match(req).then(r => r || caches.match('./index.html?v=7.8')))
     );
     return;
   }
